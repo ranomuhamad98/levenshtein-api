@@ -1,0 +1,41 @@
+steps:
+#step 1
+- name: 'gcr.io/cloud-builders/docker' 
+  entrypoint: 'bash'
+  args: [
+   '-c', 
+   'docker pull gcr.io/$PROJECT_ID/authentication:latest || exit 0'
+  ]
+#step 2
+- name: gcr.io/cloud-builders/docker
+  args: [
+   'build', 
+   '-t', 
+   'gcr.io/$PROJECT_ID/authentication:$BRANCH_NAME-$COMMIT_SHA',
+   '-t', 
+   'gcr.io/$PROJECT_ID/authentication:latest',
+   '.'
+  ]
+#step 3
+- name: 'gcr.io/cloud-builders/kubectl'
+  args: ['apply', '-f', 'k8s/']
+  env:
+  - 'CLOUDSDK_COMPUTE_ZONE=us-central1-c'
+  - 'CLOUDSDK_CONTAINER_CLUSTER=gke-cluster-authentication'
+#step 4
+- name: 'gcr.io/cloud-builders/kubectl'
+  args: [
+   'set', 
+   'image', 
+   'deployment', 
+   'authentication', 
+   'authentication=gcr.io/$PROJECT_ID/authentication:$BRANCH_NAME-$COMMIT_SHA'
+  ]
+  env:
+  - 'CLOUDSDK_COMPUTE_ZONE=us-central1-c'
+  - 'CLOUDSDK_CONTAINER_CLUSTER=gke-cluster-authentication'
+# push images to Google Container Registry with tags
+images: [
+   'gcr.io/$PROJECT_ID/authentication:$BRANCH_NAME-$COMMIT_SHA',
+   'gcr.io/$PROJECT_ID/authentication:latest'
+  ]

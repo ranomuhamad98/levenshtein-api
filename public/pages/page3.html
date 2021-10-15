@@ -1,0 +1,605 @@
+<!doctype html>
+<html lang="en">
+<head>
+<%- include ("./headerscript.html") -%>
+
+<link href="../javascripts/tabular/css/tabulator.min.css" rel="stylesheet">
+<script type="text/javascript" src="../javascripts/tabular/js/tabulator.min.js"></script>
+
+
+<style>
+    .dropzone{
+        border: solid 1px #ccc;
+        border-radius: 5px;
+    }
+</style>
+
+</head>
+<body>
+    <%- include ("./header.html") -%>
+    <div class="card-body">
+
+        <div id="processgif" style="position: absolute; top: 40%; left: 40%; z-index: 1000;"></div>
+        <div style="display: table; margin-left: 0%; padding: 0px; float: right;">
+            <div style="display: table-cell;">
+                <button id="btn-back" type="button" class="btn btn-block btn-secondary">
+                    <div class="btn-icon icon-previous">
+                    </div>
+                    <div class="btn-text">
+                        Previous
+                    </div>
+                </button>
+            </div>
+            <div style="width: 1px;display: table-cell;"></div>
+            <div style="display: table-cell;">
+                <button id="btn-prev-image" type="button" class="btn btn-block btn-secondary"><<</button>
+            </div>
+            <div style="display: table-cell;padding-left: 10px;padding-right: 10px;font-size: 10pt;" id="page-info"></div>
+            <div style="display: table-cell;">
+                <button id="btn-next-image" type="button" class="btn btn-block btn-secondary">>></button>
+            </div>
+            <div style="width: 1px;display: table-cell;"></div>
+            <div style="display: table-cell;">
+                <button id="btn-rerun" type="button" class="btn btn-block btn-secondary">
+                    <div class="btn-icon icon-ocr">
+                    </div>
+                    <div class="btn-text">
+                        Run Ocr
+                    </div>
+                </button>
+            </div>
+            <div style="width: 1px;display: table-cell;"></div>
+            <div style="display: table-cell;">
+                <button id="btn-save-csv" type="button" class="btn btn-block btn-secondary">
+                    <div class="btn-icon icon-save">
+                    </div>
+                    <div class="btn-text">
+                        Save
+                    </div>
+                </button>
+            </div>
+        </div>
+        <div style="height: 50px;"></div>
+        <table id="tbl-result">
+            <tr>
+                <th>Tanggal</th>
+                <th>Keterangan</th>
+                <th>CBG</th>
+                <th>Mutasi</th>
+                <th>Saldo</th>
+            </tr>
+            <tr>
+                <td>01/10</td>
+                <td>Saldo Awal</td>
+                <td></td>
+                <td></td>
+                <td>894,542,013.38</td>
+            </tr>
+            <tr>
+                <td>01/10</td>
+                <td>TRSF E-BANKING (CR)</td>
+                <td>0000</td>
+                <td>18,600,000</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>01/10</td>
+                <td>SETORAN TUNAI TANGGAL 01/01</td>
+                <td>8645</td>
+                <td>32,750,000</td>
+                <td></td>
+            </tr>
+        </table>
+        
+    </div>
+ 
+
+    </div>
+    <%- include ("./footer.html") -%>
+</body>
+
+<script>
+var PROJECT = "<%=config.PROJECT %>";
+var GCS_BUCKET = "<%=config.GCS_BUCKET %>";
+var GCS_PDF_FOLDER = "<%=config.GCS_PDF_FOLDER %>";
+var GCS_IMAGE_FOLDER = "<%=config.GCS_IMAGE_FOLDER %>";
+var GCS_JSON_FOLDER = "<%=config.GCS_JSON_FOLDER %>";
+var GCS_CSV_FOLDER = "<%=config.GCS_CSV_FOLDER %>";
+var UPLOAD_BASE_URL = "<%=config.UPLOAD_BASE_URL %>";
+var FILE_URI = "<%=uri %>";
+var CUR_PAGE = 1;
+var TOTAL_PAGE = "<%=totalPage %>";
+var PREV_PAGE = 0;
+
+
+$(document).ready(function()
+{
+
+    $("#processgif").hide();
+    $("#tbl-result").hide();
+    //$("#btn-back").hide();
+
+    $("#btn-back").click(function(){
+        location = "/web/page2?uri=" + encodeURIComponent(FILE_URI);
+    });
+
+    $("#btn-prev-image").on("click", function(){
+        prev();
+        run(CUR_PAGE);
+
+    })
+
+    $("#btn-next-image").on("click", function(){
+
+        saveCsv(CUR_PAGE, function(response){
+            next();
+            run(CUR_PAGE);
+        });
+
+    })
+
+    $("#btn-rerun").on("click", function(){
+        //prev();
+        //next();
+        clearAndRun(CUR_PAGE);
+    });
+
+    $("#btn-save-csv").click(function(){
+        saveCsv(CUR_PAGE, function(response){
+            console.log(response)
+            alert("Saved")
+        });
+    });
+
+    $("#btn-next").click(function()
+    {
+        location = "/web/analytic";
+    });
+    $("#page-info").html("Page : " + (CUR_PAGE) + " of " + TOTAL_PAGE)  
+    //run(CUR_PAGE);
+})
+
+
+function next()
+{
+    PREV_PAGE = CUR_PAGE;
+    CUR_PAGE++;
+
+    if(CUR_PAGE > TOTAL_PAGE)
+        CUR_PAGE = TOTAL_PAGE;
+
+    console.log("CUR_PAGE");
+    console.log(CUR_PAGE);
+    
+    $("#page-info").html("Page : " + (CUR_PAGE) + " of " + TOTAL_PAGE)
+}
+
+function prev()
+{
+    PREV_PAGE = CUR_PAGE;
+    CUR_PAGE--;
+
+    if(CUR_PAGE < 1)
+    {
+        LAST_COUNTER = 0;
+        LAST_DATA_LENGTH = 0;
+        CUR_PAGE = 1;
+    }   
+
+    console.log("CUR_PAGE");
+    console.log(CUR_PAGE);
+
+
+    $("#page-info").html("Page : " + (CUR_PAGE) + " of " + TOTAL_PAGE)
+}
+
+function getImageFilename(page)
+{
+    let filename = decodeURIComponent(FILE_URI).split("/");
+        filename = filename[filename.length - 1];
+        filename = filename.replace(".pdf", "");
+        filename += "-page-" + page;
+        filename += ".png";
+    return filename;
+}
+
+function getOriJsonFilename(page)
+{
+    let filename = decodeURIComponent(FILE_URI).split("/");
+        filename = filename[filename.length - 1];
+        filename = filename.replace(".pdf", "");
+        filename += "-page-ori-" + page;
+        filename += ".json";
+    return filename;
+}
+function getCsvFilename(page)
+{
+    let filename = decodeURIComponent(FILE_URI).split("/");
+        filename = filename[filename.length - 1];
+        filename = filename.replace(".pdf", "");
+        filename += "-page-" + page;
+        filename += ".csv";
+        filename = TYPE + "_" + filename;
+    return filename;
+}
+
+
+function getOriJsonUrl(page)
+{
+    let filename = getOriJsonFilename(page);
+    return getBaseFileUri() + "/" + GCS_BUCKET + "/" + GCS_JSON_FOLDER + "/" +  filename;
+}
+
+function getImageUrl(page)
+{
+    let filename = getImageFilename(page);
+    return getBaseFileUri() + "/" + GCS_BUCKET + "/" + GCS_IMAGE_FOLDER + "/" +  filename;
+}
+
+function getBaseFileUri()
+{
+    let uri = decodeURIComponent(FILE_URI);
+    uri = uri.replace("http://", "");
+    uri = uri.replace("https://", "");
+
+    uri = uri.split("/");
+    let host = uri[0];
+    uri = "https://" + host;
+    return uri;
+}
+
+function imageBox2Text(page, callback)
+{
+
+    let jsonFileUrl = getOriJsonUrl(page);
+    jsonFileUrl = encodeURIComponent(jsonFileUrl);
+
+    let imagefileUrl = getImageUrl(page);
+    imagefileUrl =  encodeURIComponent(imagefileUrl);
+
+    console.log("imageBox2Text Download Json")
+    console.log(jsonFileUrl);
+
+    downloadJson(jsonFileUrl, function(json){
+        console.log("JSON " + jsonFileUrl);
+        console.log(json);
+
+        if(typeof json == 'object')
+            json = JSON.stringify(json);
+
+        if(json.indexOf("<?xml") == -1)
+        {
+            json = JSON.parse(json);
+            json = { positions: json.rows }
+            json = JSON.stringify(json)
+            console.log("Json to send to parse")
+            console.log(json);
+
+            let url = "/table/parse-by-boxes/" + imagefileUrl;
+            $.post(url, json, function(response){
+                
+                if(callback != null)
+                    callback(response);
+            }).fail(function(){
+                run(CUR_PAGE);
+                //alert("Parsing failed. Please fix the table for this page.")
+            })
+
+        }
+        else
+        {
+            //CUR_PAGE = PREV_PAGE;
+            alert("The pdf page " + CUR_PAGE + " does not have table defined")
+            $("#processgif").hide();
+        }
+
+
+    })
+}
+
+function downloadJson(jsonFilename, callback)
+{
+    $.get("/web/download/" + jsonFilename, function(response){
+        if(callback != null)
+            callback(response)
+    })
+}
+
+
+function saveCsv(page, callback)
+{
+    let data = toCsv(DATATABLE);
+
+    console.log(data)
+
+    let filepath = getCsvFilename(page)
+    filepath = GCS_CSV_FOLDER + "/" + filepath;
+    filepath = encodeURIComponent(filepath);
+
+    var url = UPLOAD_BASE_URL + "/upload/gcs-create-file/" + PROJECT + "/" + GCS_BUCKET + "/" + filepath;
+    console.log("Save csv url")
+    console.log(url);   
+
+    let sJson = JSON.stringify({
+        content: data
+    });
+
+    $.post(url, sJson, function(response){
+        console.log(response);
+        if(callback != null)
+            callback(response);
+    })
+}
+
+var DATATABLE = null;
+
+function csv2Datatable(csvStr)
+{
+    let data = [];
+    let lines = csvStr.split("\n");
+    lines.forEach((line) => {
+        let row = [];
+        if(line.trim() != "")
+        {
+            let cells = line.split("\",\"");
+            cells.forEach((cell)=>{
+                let text = cell.replace(/\"/gi, "");
+                text = text.replace(/\r/gi, "");
+                row.push(text);
+            })
+            data.push(row);
+        }
+
+    })
+
+    return data;
+}
+
+function clearAndRun(page)
+{
+    $("#processgif").show();
+    let tbl = $("#tbl-result");
+    $(tbl).html("");
+    ocr(page)
+}
+
+function ocr(page)
+{
+    console.log("CSV doesn't exist. Parsing ....")
+    imageBox2Text(page, function(response)
+    {
+        console.log("RESPONSE FROM PARSE");
+        console.log(response);
+
+        let hh = HEADERS.split(",")
+        console.log(HEADERS)
+        console.log(response.payload[0].length)
+
+        if(hh.length != response.payload[0].length)
+        {
+            alert("The total header's columns is not the same with rows's column, please fix the table guideline")
+        }
+        else
+        {
+            let data =  assembleData(HEADERS, response.payload);
+
+            console.log("assembleData");
+            console.log(data);
+
+            DATATABLE = toTable(data, YEAR);
+            displayResult(DATATABLE)
+
+        }
+        
+        $("#processgif").hide();
+
+    })
+}
+
+function run(page, dontDownload)
+{
+    let tbl = $("#tbl-result");
+    $(tbl).html("");
+
+    $("#processgif").show();
+
+    let filepath = getCsvFilename(page)
+    filepath = GCS_CSV_FOLDER + "/" + filepath;
+    filepath = getBaseFileUri() + "/" + GCS_BUCKET + "/" + filepath;
+    console.log(filepath)
+    filepath = encodeURIComponent(filepath);
+
+    console.log("Download " + filepath)
+    
+    downloadJson(filepath, function(result)
+    {
+        console.log(result)
+        if(result.indexOf("<?xml") == -1)
+        {
+            let data = csv2Datatable(result);
+            console.log(data);
+            data = assembleData2(data);
+            DATATABLE = data;
+            displayResult(DATATABLE)
+            $("#processgif").hide();
+        }
+        else
+        {
+            ocr(page);
+        }
+
+    })
+
+    
+    
+    /*
+    setTimeout(function(){
+        $("#processgif").hide();
+        $("#tbl-result").show();
+        $("#btn-next").show();
+        $("#btn-back").show();
+    }, 5000 )*/
+}
+
+var LAST_COUNTER = 0;
+var LAST_DATA_LENGTH = 0;
+var ALLDATA =  [];
+
+function getLastCounter()
+{
+    let lastCounter = 0;
+    for(var i = 0; i < CUR_PAGE - 1; i++)
+    {
+        let l = ALLDATA[i].length - 1;
+        lastCounter+= l;
+    }
+
+    return lastCounter;
+}
+function assembleData(headers, data)
+{
+
+    let heads = headers.split(",");
+    let headss = [];
+
+    heads.forEach((head)=>{
+        let item = { text: head };
+        headss.push(item);
+    })
+
+    data.splice(0, 0, headss);
+
+    let counter = 0;
+    let lastCounter = getLastCounter();
+    console.log(lastCounter)
+    for(var i = 0; i < data.length; i++)
+    {
+        let row = data[i];
+        let counter2 = lastCounter + counter;
+        if(counter  == 0)
+            row.splice(0,0, { text: "" });
+        else
+            row.splice(0,0, { text: counter2 });
+        counter++;
+    }
+
+    if((CUR_PAGE - 1) in ALLDATA)
+    {
+        ALLDATA[CUR_PAGE - 1] = data; 
+    }
+    else
+    {
+        ALLDATA.push(data);
+    }
+
+    console.log("ALLDATA")
+    console.log(ALLDATA)
+   
+    return data;
+}
+
+function assembleData2( data)
+{   
+    if((CUR_PAGE - 1) in ALLDATA)
+    {
+        ALLDATA[CUR_PAGE - 1] = data; 
+    }
+    else
+    {
+        ALLDATA.push(data);
+    }
+    console.log("ALLDATA")
+    console.log(ALLDATA)
+    return data;
+}
+
+function toTable(data, year)
+{
+    let rows = [];
+    let totalRows = data.length;
+    let totalCols = data[0].length;
+
+    for(var i = 0; i < totalRows; i++)
+    {
+        let row = [];
+        for(var j = 0; j < totalCols; j++)
+        {
+            row.push(data[i][j].text);
+        }
+
+        if(TYPE.toLocaleLowerCase().indexOf("bca") > -1)
+        {
+            let dt = row[1];
+            if(dt != null && dt.trim().length > 0 && dt.indexOf("/") > -1)
+            {
+                dt = dt.split("/");
+                dt = year + "-" + dt[1] + "-" + dt[0];
+                row[1] = dt;
+            }
+        }
+
+        rows.push(row);
+    }
+    return rows;
+}
+
+function toCsv(table)
+{
+    console.log("TABLE")
+    console.log(table);
+
+    let stable = "";
+    table.forEach((row)=>{
+
+        row.forEach((cell)=>{
+            stable += "\"" + cell + "\",";
+        })
+        if(stable.length > 0)
+            stable = stable.substr(0, stable.length - 1);
+        stable += "\r\n"
+    })
+
+    return stable;
+}
+
+function displayResult(data)
+{
+    console.log("display result")
+    let tbl = $("#tbl-result");
+    $(tbl).html("");
+
+    data.forEach((row)=>{
+        
+        let tr = document.createElement("tr")
+        row.forEach((cell)=>{
+           
+            let td = document.createElement("td");
+            $(td).html(cell);
+            $(tr).append(td);
+        })
+
+        $(tbl).append(tr);
+    })
+
+    $(tbl).show();
+}
+
+function rows2boxes(rows)
+{
+    let boexes = [];
+    let rowIdx = 0;
+    let colIdx = 0;
+    rows.forEach((row)=>{
+        colIdx = 0;
+        row.forEach((cell)=>{
+            boexes.push({ x: cell.x, y: cell.y, w: cell.w, h: cell.h, col: cell.col, row: cell.row, text: cell.text })
+            colIdx++;
+        })
+        rowIdx++;
+    })
+
+    return boexes;
+}
+
+</script>
+</html>

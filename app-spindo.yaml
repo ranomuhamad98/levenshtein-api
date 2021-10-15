@@ -1,0 +1,25 @@
+service: levenshtein
+runtime: nodejs12
+env: standard
+env_variables:
+  PORT: "8080"
+  DBHOST: "34.101.186.187"
+  DBNAME: "logger"
+  DBUSER: "nodeuser"
+  DBPASSWORD: "rotikeju98"
+  DBENGINE: "postgresql"
+  APPLICATION_PORT : "8080"
+  PROJECT : "dvt-apac-playground-3"
+  GCS_BUCKET: "document-parser-results"
+  GCS_IMAGE_FOLDER : "images"
+  GCS_PDF_FOLDER: "pdf"
+  GCS_JSON_FOLDER: "json"
+  GCS_CSV_FOLDER: "csv"
+  GCS_ZIP_FOLDER: "zip_file"
+  GCS_ZIP_BUCKET: "input_excel"
+  GCS_TEMP_ZIP_BUCKET: "document-parser-results"
+  GCS_TEMP_ZIP_FOLDER: "zip"
+  UPLOAD_BASE_URL: "https://gcsfileuploader-v2-dot-dvt-apac-playground-3.et.r.appspot.com"
+  OCR_URL: "http://35.224.116.29:8080"
+  YEAR_TEMP: "2020"
+
