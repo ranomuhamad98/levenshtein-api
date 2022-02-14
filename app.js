@@ -33,7 +33,7 @@ app.use(session({
     dataset: new Datastore(),
     kind: 'express-sessions',
   }),
-  secret: 'bankparserweb',saveUninitialized: true,resave: false}));
+  secret: 'levenshtein',saveUninitialized: true,resave: false}));
 
 //Dynamic routing based on configuration
 const fs = require('fs');
@@ -41,7 +41,15 @@ let rawdata = fs.readFileSync('route-config.json');
 let routers = JSON.parse(rawdata);
 routers.forEach(function (route){
   var r = require(route.router);
-  app.use(route.path,  r)
+  console.log("add route  : " + route.path + "");
+
+  let logic = route.logic;
+  if(logic != null)
+    logic = require(route.logic)
+
+  console.log(logic)
+  let newRouter = r.getRouter(logic);
+  app.use(route.path,  newRouter)
 })
 
 
@@ -82,9 +90,7 @@ app.use(function(err, req, res, next) {
 
 app.listen(port)
 
-
-
-//Initialization.initializeDatabase();
+Initialization.initializeDatabase();
 
 console.log("Document Parser POC server on  port : " + port)
 
