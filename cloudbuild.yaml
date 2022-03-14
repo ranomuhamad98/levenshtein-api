@@ -44,7 +44,7 @@ steps:
   ]
   env:
   - 'CLOUDSDK_COMPUTE_ZONE=asia-southeast2-a'
-  - 'CLOUDSDK_CONTAINER_CLUSTER=levenshtein-api-cluster'
+  - 'CLOUDSDK_CONTAINER_CLUSTER=levenshtein-api-cluster-jakarta'
 # push images to Google Container Registry with tags
 images: [
    'gcr.io/$PROJECT_ID/levenshtein-api:$BRANCH_NAME-$COMMIT_SHA',
