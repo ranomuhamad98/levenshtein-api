@@ -1,0 +1,13 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: levenshtein-config
+  labels:
+    app: levenshtein
+data:
+  DBHOST: 34.67.143.103
+  DBNAME: levenshtein-api
+  DBUSER: nodeuser
+  DBPASSWORD: RotiKeju98*
+  APPLICATION_PORT: '8080'
+  GCP_PROJECT: huda-playground
