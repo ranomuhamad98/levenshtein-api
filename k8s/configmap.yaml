@@ -9,5 +9,6 @@ data:
   DBNAME: levenshtein-api
   DBUSER: nodeuser
   DBPASSWORD: RotiKeju98*
+  DBENGINE: postgres
   APPLICATION_PORT: '8080'
   GCP_PROJECT: huda-playground
