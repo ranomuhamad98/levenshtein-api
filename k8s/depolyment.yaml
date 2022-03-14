@@ -2,23 +2,23 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    run: levenshtein
-  name: levenshtein
+    run: levenshtein-api
+  name: levenshtein-api
 spec:
   replicas: 2
   selector:
     matchLabels:
-      run: levenshtein
+      run: levenshtein-api
   template:
     metadata:
       labels:
-        run: levenshtein
+        run: levenshtein-api
     spec:
       containers:
-      - image: gcr.io/huda-playground/levenshtein:latest
-        name: levenshtein
+      - image: gcr.io/huda-playground/levenshtein-api:latest
+        name: levenshtein-api
         ports:
         - containerPort: 8080
         envFrom:
           - configMapRef:
-              name: levenshtein-config
+              name: levenshtein-api-config

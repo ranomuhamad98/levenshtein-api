@@ -1,9 +1,9 @@
 kind: ConfigMap
 apiVersion: v1
 metadata:
-  name: levenshtein-config
+  name: levenshtein-api-config
   labels:
-    app: levenshtein
+    app: levenshtein-api
 data:
   DBHOST: 34.67.143.103
   DBNAME: levenshtein-api

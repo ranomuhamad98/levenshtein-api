@@ -1,10 +1,10 @@
 kind: Service
 apiVersion: v1
 metadata:
-  name: levenshtein
+  name: levenshtein-api
 spec:
   selector:
-     run: levenshtein
+     run: levenshtein-api
   ports:
   - protocol: TCP
     port: 80
