@@ -22,4 +22,4 @@ spec:
         envFrom:
           - configMapRef:
               name: levenshtein-api-config
-      serviceAccountName:  huda-owner-full-684@huda-playground.iam.gserviceaccount.com
+      serviceAccountName:  huda-owner-full-684
