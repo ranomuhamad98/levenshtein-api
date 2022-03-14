@@ -23,6 +23,12 @@ ejs.close = '}}';
 
 var app = express();
 
+app.use(function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  next();
+});
+
 //Consider all request as application/json
 app.use(express.json({type: '*/*'}));
 // parse application/json
@@ -86,6 +92,8 @@ app.use(function(err, req, res, next) {
   res.status(err.status || 500);
   res.render('error');
 });
+
+
 
 
 app.listen(port)

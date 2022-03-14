@@ -9,6 +9,7 @@ class DocumentModel extends Model {
             upload_date: DataTypes.DATE,
             upload_by: DataTypes.STRING,
             organization_code: DataTypes.STRING,
+            document_size: DataTypes.DECIMAL,
             createdAt: DataTypes.DATE,
             updatedAt: DataTypes.DATE
         }, 

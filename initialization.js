@@ -32,12 +32,6 @@ class Initialization {
         DocumentFormTemplatesModel.initialize(sequelize, force);
 
         await sequelize.sync();
-
-        //LoggerModel.initialize(sequelize, force);
-
-        //await sequelize.sync();
-
-        //ApplicationModel.belongsToMany(UserModel, { through: UserApplicationModel } )
     }
 }
 

@@ -13,6 +13,11 @@ class CrudLogic {
         return "id";
     }
 
+    static totalData(search)
+    {
+
+    }
+
     static async create(o)
     {
         const CurrentModel = this.getModel();
@@ -71,7 +76,7 @@ class CrudLogic {
 
             console.log(opt)
 
-            let os  = await CurrentModel.findAll(opt)
+            let os  = await CurrentModel.findAndCountAll(opt)
             return { success: true, payload: os }
         }
         catch (error)

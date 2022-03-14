@@ -4,8 +4,10 @@ class CrudRouter {
         var express = require('express');
         var router = express.Router();
         router.logic = logic;
+        let me = this;
 
         router.post('/create', function (req, res){
+            me.init(req, res);
             let o = req.body;
             let logic = router.logic;
             logic.session = req.session;
@@ -20,7 +22,7 @@ class CrudRouter {
         })
         
         router.get('', function (req, res){
-        
+            me.init(req, res);
             let logic = router.logic;
             logic.session = req.session;
             console.log(logic);
@@ -36,6 +38,7 @@ class CrudRouter {
         
         router.get('/find/:search', function (req, res){
         
+            me.init(req, res);
             let logic = router.logic;
             logic.session = req.session;
             let search = req.params.search;
@@ -53,6 +56,7 @@ class CrudRouter {
         
         router.get('/find/:search/:offset/:limit', function (req, res){
         
+            me.init(req, res);
             let logic = router.logic;
             logic.session = req.session;
             let offset = req.params.offset;
@@ -74,6 +78,7 @@ class CrudRouter {
 
         router.get('/:offset/:limit', function (req, res){
         
+            me.init(req, res);
             let logic = router.logic;
             logic.session = req.session;
             let offset = req.params.offset;
@@ -89,10 +94,9 @@ class CrudRouter {
             })
         })
         
-        
-        
-        
         router.get('/get/:id', function (req, res){
+
+            me.init(req, res);
             let id = req.params.id;
             let logic = router.logic;
             logic.session = req.session;
@@ -106,6 +110,8 @@ class CrudRouter {
         })
         
         router.post('/update/:id', function (req, res){
+
+            me.init(req, res);
             let o = req.body;
             let id = req.params.id;
             let logic = router.logic;
@@ -120,6 +126,8 @@ class CrudRouter {
         })
         
         router.get('/delete/:id', function (req, res){
+
+            me.init(req, res);
             let id = req.params.id;
             let logic = router.logic;
             logic.session = req.session;
@@ -133,6 +141,10 @@ class CrudRouter {
         })
 
         return router;
+    }
+
+    static init(){ 
+
     }
 }
 

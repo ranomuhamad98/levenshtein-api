@@ -12,6 +12,12 @@ class DocumentRouter extends CrudRouter{
 
         return router;
     }
+
+    static init(req, res)
+    {
+        if(req.session.organization_code == null)
+            req.session.organization_code = "DEVOTEAM";
+    }
 }
 
 module.exports = DocumentRouter;
