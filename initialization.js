@@ -23,6 +23,12 @@ class Initialization {
 
         let force = false;
 
+        console.log("Database info:")
+        console.log(process.env.DBHOST)
+        console.log(process.env.DBNAME)
+        console.log(process.env.DBUSER)
+        console.log(process.env.DBENGINE)
+
         DocumentModel.initialize(sequelize, force);
         DocumentTablesModel.initialize(sequelize, force);
         DocumentTableTemplatesModel.initialize(sequelize, force);
