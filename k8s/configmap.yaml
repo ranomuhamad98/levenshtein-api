@@ -5,10 +5,3 @@ metadata:
   labels:
     app: levenshtein-api
 data:
-  DBHOST: 34.67.143.103
-  DBNAME: levenshtein-api
-  DBUSER: nodeuser
-  DBPASSWORD: RotiKeju98*
-  DBENGINE: postgres
-  APPLICATION_PORT: '8080'
-  GCP_PROJECT: huda-playground
