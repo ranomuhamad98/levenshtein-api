@@ -5,5 +5,9 @@
     { "path" :  "/document-form-templates", "router"  : "./routes/document_form_templates", "logic" : "./modules/logic/document_form_templates_logic" },
     { "path" :  "/document-forms", "router"  : "./routes/document_forms", "logic" : "./modules/logic/document_forms_logic" },
     { "path" :  "/organizations", "router"  : "./routes/organization", "logic" : "./modules/logic/organization_logic" },
-    { "path" :  "/users", "router"  : "./routes/users", "logic" : "./modules/logic/users_logic" }
+    { "path" :  "/users", "router"  : "./routes/users", "logic" : "./modules/logic/users_logic" },
+    { "path" :  "/templates", "router"  : "./routes/templates", "logic" : "./modules/logic/templatelogic" },
+    { "path" :  "/parser", "router"  : "./routes/parser", "logic" : "./modules/logic/parser_logic" },
+    { "path" :  "/ocrsessions", "router"  : "./routes/ocrsessions", "logic" : "./modules/logic/ocrsessionlogic" }
+
 ]

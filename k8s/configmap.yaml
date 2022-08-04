@@ -5,3 +5,4 @@ metadata:
   labels:
     app: levenshtein-api
 data:
+  fullname: "Miftahul Huda"

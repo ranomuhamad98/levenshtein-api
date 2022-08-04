@@ -22,3 +22,5 @@ spec:
         envFrom:
           - configMapRef:
               name: levenshtein-api-config
+          - secretRef:
+              name: levenshtein-api-secret

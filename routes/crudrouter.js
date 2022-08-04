@@ -73,25 +73,80 @@ class CrudRouter {
                 res.send(err);
             })
         })
-        
-        
 
-        router.get('/:offset/:limit', function (req, res){
+        router.get('/find/:search/:offset/:limit/:sortcol/:sortdir', function (req, res){
         
             me.init(req, res);
             let logic = router.logic;
             logic.session = req.session;
             let offset = req.params.offset;
             let limit = req.params.limit;
+            let search = req.params.search;
+            let sortCol = req.params.sortcol;
+            let sortDir = req.params.sortdir;
         
-            logic.findAll(null, offset, limit).then(function (os)
+            logic.findByKeyword(search, offset, limit, [[sortCol, sortDir]]).then(function (os)
             {
+                
                 res.send(os);
             }).catch(function (err){
                 console.log("error")
                 console.log(err)
                 res.send(err);
             })
+        })
+        
+        
+
+        router.get('/:offset/:limit', function (req, res, next){
+        
+            me.init(req, res);
+            let logic = router.logic;
+            logic.session = req.session;
+            let offset = req.params.offset;
+            let limit = req.params.limit;
+
+            if(isNaN(offset) || isNaN(limit))
+                next();
+            else
+            {
+                logic.findAll(null, offset, limit).then(function (os)
+                {
+                    res.send(os);
+                }).catch(function (err){
+                    console.log("error")
+                    console.log(err)
+                    res.send(err);
+                })
+            }
+            
+        })
+
+
+        router.get('/:offset/:limit/:sortcol/:sortdir', function (req, res, next){
+        
+            me.init(req, res);
+            let logic = router.logic;
+            logic.session = req.session;
+            let offset = req.params.offset;
+            let limit = req.params.limit;
+            let sortCol = req.params.sortcol;
+            let sortDir = req.params.sortdir;
+        
+            if(isNaN(offset) || isNaN(limit))
+                next();
+            else
+            {
+                logic.findAll(null, offset, limit, [[sortCol, sortDir]]).then(function (os)
+                {
+                    res.send(os);
+                }).catch(function (err){
+                    console.log("error")
+                    console.log(err)
+                    res.send(err);
+                })
+            }
+            
         })
         
         router.get('/get/:id', function (req, res){

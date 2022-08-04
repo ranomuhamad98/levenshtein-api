@@ -30,6 +30,32 @@ class DocumentLogic extends CommonLogic {
         let order = [['upload_date', 'DESC']];
         return order;
     }
+
+    static async create(o)
+    {
+        try {
+            const CurrentModel = this.getModel();
+            console.log("o.filename")
+            console.log(o.filename)
+            let f = await CurrentModel.findAll({ where: { filename :  { [Op.like] : o.filename } }})
+            console.log("f")
+            console.log(f)
+            if(f.length == 0)
+                return await super.create(o);
+            else 
+            {
+                o.upload_date = Date.now();
+                console.log("here is")
+                return await super.update(f[0].id, o)
+            }
+        }
+        catch (e)
+        {
+            console.log(e)
+            throw e;
+        }
+
+    }
 }
 
 module.exports = DocumentLogic;
