@@ -1,0 +1,1 @@
+docker run -p 8181:8080  -v  /Users/miftahul.huda/Credentials:/creds  -e GOOGLE_APPLICATION_CREDENTIALS='/creds/levenshtein-dev-app.json' -e OCR_API=https://tesseract-ocr-service-owlowcpkna-et.a.run.app levenshtein-api

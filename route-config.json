@@ -1,4 +1,5 @@
 [
+    { "path" :  "", "router"  : "./routes/index" },
     { "path" :  "/documents", "router"  : "./routes/document", "logic" : "./modules/logic/document_logic" },
     { "path" :  "/document-tables", "router"  : "./routes/document_tables", "logic" : "./modules/logic/document_tables_logic" },
     { "path" :  "/document-table-templates", "router"  : "./routes/document_table_templates", "logic" : "./modules/logic/document_table_templates_logic" },

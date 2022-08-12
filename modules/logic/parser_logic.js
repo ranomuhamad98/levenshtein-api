@@ -93,6 +93,9 @@ class ParserLogic
 
                 
                 ParserLogic.remoteOcrEffort = 0;
+                console.log("remoteOcr")
+                console.log(ocrurl);
+                
                 ParserLogic.remoteOcr(ocrurl, param, function(formOcrResult){
 
                     ParserLogic.ocrTable(imgFile, tableRectangles, 0, [], function (allTableOcrResults){

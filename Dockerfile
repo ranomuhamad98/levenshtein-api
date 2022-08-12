@@ -11,6 +11,8 @@ COPY package*.json ./
 RUN apt-get update -y
 RUN apt-get install ghostscript -y
 RUN apt-get install graphicsmagick -y
+RUN npm install pm2 -g
+
 
 RUN npm install
 # If you are building your code for production
@@ -29,7 +31,9 @@ ENV DBUSER "nodeuser"
 ENV DBPASSWORD "RotiKeju98*"
 ENV DBENGINE "postgresql"
 ENV UPLOADER_API "https://gcsfileuploader-v2-dot-levenshtein-dev.et.r.appspot.com"
-ENV OCR_API "http://34.101.90.205:8282"
+#ENV OCR_API "https://tesseract-ocr-service-owlowcpkna-et.a.run.app"
+
 
 EXPOSE 8080
 CMD [ "node", "app.js" ]
+#CMD [ "pm2-runtime", "start", "process.config.js" ]
