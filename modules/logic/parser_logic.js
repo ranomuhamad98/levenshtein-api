@@ -28,7 +28,14 @@ class ParserLogic
                 let sTemplate = template.tableTemplate;
                 sTemplate = atob(sTemplate);
                 
-                let guidelineInfo = JSON.parse(sTemplate);
+                let templateObject = JSON.parse(sTemplate);
+
+                console.log("templateObject")
+                console.log(templateObject)
+
+                let guidelineInfo = templateObject.boxes;
+                let imageHeight = templateObject.imageHeight;
+                let imageWidth = templateObject.imageWidth;
 
 
                 let totalForm = 0;
@@ -40,9 +47,13 @@ class ParserLogic
                         totalTable++;
                 })
                 
-                ParserLogic.convert2images(pdfUrl).then((images)=>{
+                console.log("convert2images...")
+                ParserLogic.convert2images(pdfUrl, imageWidth, imageHeight).then((images)=>{
 
+                    console.log("ocrImages2s...")
                     ParserLogic.ocrImages2(images, 0, guidelineInfo, totalForm, totalTable, [], function(results){
+                        
+                        console.log("ocrImages2 done")
                         resolve({ success: true, payload: results})
                     })
                 })
@@ -90,7 +101,16 @@ class ParserLogic
 
                         ParserLogic.ocrImages2(images, idx + 1, guidelineInfo, totalForm, totalTable, results, callback)
                     })
-                }, null)
+                }, function(err)
+                {
+                    ParserLogic.ocrTable(imgFile, tableRectangles, 0, [], function (allTableOcrResults){
+                        let allResults = { formOcrResult: null, tableOcrResult: allTableOcrResults }
+                        results.push({ page: idx + 1, allResults: allResults })
+
+                        ParserLogic.ocrImages2(images, idx + 1, guidelineInfo, totalForm, totalTable, results, callback)
+                    })
+
+                })
 
                 //console.log("Done remote ocr")
 
@@ -123,10 +143,14 @@ class ParserLogic
             ParserLogic.remoteOcr(ocrurl, param, function(tableOcrResult){
 
                 results.push({ tableID: tableRectangle.tableID, result: tableOcrResult.payload } )
-
                 ParserLogic.ocrTable(imageFile, tableRectangles, idx + 1, results, callback)
 
-            }, null)
+            }, function(err){
+
+                results.push({ tableID: tableRectangle.tableID, result: null, error: err } )
+                ParserLogic.ocrTable(imageFile, tableRectangles, idx + 1, results, callback)
+
+            })
 
         }
         else 
@@ -167,7 +191,8 @@ class ParserLogic
                 callback(response2)
 
         }).catch((err)=>{
-            console.log('err')
+            console.log('remoteOcrAgain.err')
+            console.log(err)
             if(callbackError != null)
                 callbackError(err)
         })
@@ -217,7 +242,7 @@ class ParserLogic
     }
 
 
-    static async convert2images(pdfUrl)
+    static async convert2images(pdfUrl, w, h)
     {
 
         let promise = new Promise((resolve, reject)=>{
@@ -225,7 +250,7 @@ class ParserLogic
 
             httpclient.download(pdfUrl, tmpDownloadedPdf ).then(()=>{
                 
-                ImageProcessor.pdf2images(tmpDownloadedPdf).then((images)=>{
+                ImageProcessor.pdf2images(tmpDownloadedPdf, w, h).then((images)=>{
 
                     resolve(images);
                 })
