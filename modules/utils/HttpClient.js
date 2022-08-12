@@ -1,6 +1,9 @@
 var fs = require('fs');
 var request = require('request');
 var progress = require('request-progress');
+const axios = require('axios').default;
+const FormData = require('form-data'); // npm install --save form-data
+
 
 class HttpClient 
 {
@@ -30,6 +33,50 @@ class HttpClient
 
         return promise;
     
+    }
+
+    static async post(url, param)
+    {
+        let promise = new Promise((resolve, reject)=>{
+            axios.post(url, param)
+            .then(function (response) {
+                resolve(response.data);
+            })
+            .catch(function (error) {
+                reject(error);
+            });
+        });
+
+        return promise;
+    }
+
+    static async upload(url, filepath)
+    {
+        let promise = new Promise((resolve, reject)=>{
+            var formData = new FormData();
+
+            let fname = filepath.split('/');
+            fname = fname[fname.length - 1]
+
+            formData.append("file", fs.readFileSync( filepath), fname);
+            axios.post(url, formData, {
+                headers: {
+                    ...formData.getHeaders(),
+                }
+            }).then((response)=>{
+                console.log("response")
+                console.log(response.data)
+                resolve(response.data)
+
+            }).catch(function (error){
+                console.log("error")
+                console.log(error)
+                reject(error);
+            })
+        });
+
+        return promise;
+
     }
 }
 

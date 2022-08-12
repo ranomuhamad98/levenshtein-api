@@ -10,7 +10,8 @@ class OcrSessionModel extends Model {
             templateId: DataTypes.INTEGER,
             runningStatus: DataTypes.INTEGER,
             ocrResult: DataTypes.TEXT,
-            sessionID: DataTypes.STRING
+            sessionID: DataTypes.STRING,
+            error: DataTypes.TEXT
         }, 
         { sequelize, modelName: 'ocrsession', tableName: 'ocrsession', force: force });
     }

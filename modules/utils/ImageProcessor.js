@@ -1,38 +1,23 @@
-const sharp = require('sharp');
+//https://www.npmjs.com/package/pdf2pic
 const { fromPath } = require( "pdf2pic");
 const fs = require('fs');
 const pdf = require('pdf-page-counter');
 var path = require('path');
 
-const pdfConverter  = require('pdf-poppler');
+//This cannot run on linux
+//const pdfConverter  = require('pdf-poppler');
 
 
 
 class ImageProcessor
 {
-    /*
-    To crop image.
-    Parameter:
-    - originalImage: the original image to be cropped.
-    - outputImage: the name of the cropped file name
-    - opt: Parameter for cropping { width, height, top, left }
-    */
-    static async crop(originalImage, outputImage, opt)
-    {
-        let promise = new Promise((resolve, reject)=>{
-            sharp(originalImage).extract(opt).toFile(outputImage)
-            .then(function(new_file_info) {
-                //console.log("Image cropped and saved");
-            })
-            .catch(function(err) {
-                //console.log("An error occured");
-            });
-        })
-    }
+    
 
     static async pdf2images(pdfPath)
     {
         let promise = new Promise((resolve, reject)=>{
+
+            /*
             let dataBuffer = fs.readFileSync(pdfPath);
             
             pdfConverter.info(pdfPath).then(function(data) {
@@ -45,9 +30,55 @@ class ImageProcessor
                 })
              
             });
+
+            */
+
+            let dataBuffer = fs.readFileSync(pdfPath);
+            pdf(dataBuffer).then(function(data) {
+            
+                // number of pages
+                let totalPages = data.numpages;
+
+                ImageProcessor.pdf2image(pdfPath, 1, totalPages, [], function(resultImages){
+                    resolve(resultImages)
+                })
+            
+            });
+
             
         })
         return promise;
+    }
+
+    static async pdf2image(pdfPath, idx, totalPages, resultimages, callback )
+    {
+        if(idx <= totalPages)
+        {
+            let basename = path.basename(pdfPath)
+            let outputfname = basename + ".page-" + idx;
+
+            let saveFolder = "/tmp/pdf-images"
+
+            let options =
+            {
+                
+                saveFilename: outputfname,
+                savePath: saveFolder,
+                format: "png",
+            }
+            const storeAsImage = fromPath(pdfPath, {});
+            storeAsImage(idx).then(()=>{
+
+                resultimages.push({ page: idx, image: saveFolder + "/" + outputfname})
+                ImageProcessor.pdf2image(pdfPath, idx + 1, totalPages, resultimages, callback)
+            })
+        }
+        else 
+        {
+            if(callback != null)
+                callback(resultimages)
+        }
+
     }
 
     static async pdf2images_process(pdfPath, totalPages)

@@ -107,6 +107,6 @@ app.listen(port)
 
 Initialization.initializeDatabase();
 
-console.log("Document Parser server on  port : " + port)
+console.log("Levenshtein API server on  port : " + port)
 
 module.exports = app;
