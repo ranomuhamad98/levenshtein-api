@@ -68,11 +68,11 @@ class ParserRouter {
             })
         });
 
-        router.get('/ocr-pdf-all/:templateId/:pdf', (req, res)=>{
+        router.get('/ocr-pdf-all/:pdf', (req, res)=>{
             let pdf = req.params.pdf;
-            let templateId = req.params.templateId;
 
-            logic.parseAllPdf(pdf, templateId).then((response)=>{
+            logic.parseAllPdf(pdf).then((response)=>{
+                
                 res.send(response);
             }).catch((error)=>{
                 console.log("Error")

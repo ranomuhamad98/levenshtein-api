@@ -4,14 +4,15 @@ var path = require('path')
 const fs = require('fs');
 const ImageProcessor = require("../utils/ImageProcessor");
 const TemplateModel = require("../models/templatemodel");
-
+const PageTemplateModel = require("../models/pagetemplatemodel");
+const { Op } = require("sequelize");
 
 
 class ParserLogic 
 {
     static worker = null;
 
-    static parseAllPdf(pdfUrl, templateid)
+    static parseAllPdf(pdfUrl)
     {
         //ParserLogic.language = General.randomString(10)
         ParserLogic.language = 'eng';
@@ -20,70 +21,191 @@ class ParserLogic
         console.log('parseAllPdf')
         let promise = new Promise(async (resolve, reject)=>{
 
-            let templates = await TemplateModel.findAll({ where: { id: templateid } })
+                console.log("getPageTemplates")
+                ParserLogic.getPageInfoFromPageTemplates(pdfUrl).then((pageInfos)=>{
 
-            if(templates.length > 0)
-            {
-                let template = templates[0];
-                let sTemplate = template.tableTemplate;
-                sTemplate = atob(sTemplate);
-                
-                let templateObject = JSON.parse(sTemplate);
-
-                console.log("templateObject")
-                console.log(templateObject)
-
-                let guidelineInfo = templateObject.boxes;
-                let imageHeight = templateObject.imageHeight;
-                let imageWidth = templateObject.imageWidth;
-
-
-                let totalForm = 0;
-                let totalTable = 0;
-                guidelineInfo.map((info)=>{
-                    if(info.type == "form")
-                        totalForm++;
-                    if(info.type == "table")
-                        totalTable++;
-                })
-                
-                console.log("convert2images...")
-                ParserLogic.convert2images(pdfUrl, imageWidth, imageHeight).then((images)=>{
+                    let images = []
+                    pageInfos.map((pageInfo)=>{
+                        images.push({ page: pageInfo.page, image: pageInfo.pageImageUrl })
+                    })
 
                     console.log("ocrImages2s...")
-                    ParserLogic.ocrImages2(images, 0, guidelineInfo, totalForm, totalTable, [], function(results){
+                    ParserLogic.ocrImages2(images, 0, pageInfos, [], function(results){
                         
                         console.log("ocrImages2 done")
                         resolve({ success: true, payload: results})
+
+                    }, function(err){
+                        reject(err)
                     })
-                })
-            }
-            else 
-            {
-                resolve({success: false, message: "No such template"})
-            }
-            
+                        
+
+
+                }).catch((err)=>{
+                    reject(err)
+                })               
 
         })
         return promise;
     }
 
-    static async ocrImages2(images, idx, guidelineInfo, totalForm, totalTable, results, callback)
+
+    static parseAllPdfOld(pdfUrl)
+    {
+        //ParserLogic.language = General.randomString(10)
+        ParserLogic.language = 'eng';
+        //fs.copyFileSync("eng.traineddata", ParserLogic.language + ".traineddata")
+
+        console.log('parseAllPdf')
+        let promise = new Promise(async (resolve, reject)=>{
+
+                console.log("getPageTemplates")
+                ParserLogic.getPageInfoFromPageTemplates(pdfUrl).then((pageInfos)=>{
+
+                    console.log("convert2images...")
+                    ParserLogic.convert2images(pdfUrl, pageInfos).then((images)=>{
+
+                        console.log(images)
+                        //resolve({ success: true, payload: images})
+    
+                        console.log("ocrImages2s...")
+                        ParserLogic.ocrImages2(images, 0, pageInfos, [], function(results){
+                            
+                            console.log("ocrImages2 done")
+                            resolve({ success: true, payload: results})
+
+                        }, function(err){
+                            reject(err)
+                        })
+                        
+                    }).catch((err)=>{
+                        reject(err)
+                    })
+
+                }).catch((err)=>{
+                    reject(err)
+                })               
+
+        })
+        return promise;
+    }
+
+    static getPageInfoFromPageTemplates(document)
+    {
+        let promise = new Promise((resolve, reject)=>{
+
+            PageTemplateModel.findAll({ where: { document: { [Op.iLike]: document } } }).then((results)=>{
+
+                let infos = []
+                results.map((item)=>{
+                    let tableTemplate = item.tableTemplate;
+                    tableTemplate = atob(tableTemplate);
+                    tableTemplate = JSON.parse(tableTemplate)
+
+                    let infoItem = { page: item.page, width: tableTemplate.imageWidth, height: tableTemplate.imageHeight }
+                    infoItem.guidelineInfo = tableTemplate.boxes;
+                    infoItem.pageImageUrl = item.pageImageUrl;
+                    infos.push(infoItem);
+                })
+
+                resolve(infos)
+
+            }).catch((err) => {
+                reject(err)
+            })
+
+        })
+
+        return promise;
+    }
+
+
+    static async ocrImages2(images, idx, pageInfos, results, callback, callbackError)
     {
         if(idx < images.length)
         {
+            let guidelineInfo =  null;
+            pageInfos.map((item)=>{
+                if(item.page == images[idx].page)
+                    guidelineInfo = item.guidelineInfo;
+            })
+
+            //console.log("ocrImages2 : guidelineinfo for  " + images[idx].page)
+            //console.log(guidelineInfo);
+
             let [ formRectangles, tableRectangles ] = ParserLogic.createRectangles(guidelineInfo);
 
+            let upload_url = process.env.UPLOADER_API + "/upload/gcs/" + process.env.GCP_PROJECT;
+            upload_url += "/" + process.env.GCP_UPLOAD_BUCKET + "/" + process.env.GCP_UPLOAD_FOLDER;
+
+            let fname= images[idx].image;
+            fname = fname.replace("gs://", "https://storage.googleapis.com/")
+
+            let imgFile = encodeURIComponent(fname)
+            let ocrurl = process.env.OCR_API + '/imageboxes2text?url=' + imgFile; 
+
+            let param = { positions: formRectangles };
+            
+            ParserLogic.remoteOcrEffort = 0;
+            console.log("ocrImages2 : remoteOcr for page : " + images[idx].page)
+            console.log(ocrurl);
+            
+            ParserLogic.remoteOcr(ocrurl, param, function(formOcrResult){
+
+                ParserLogic.ocrTable(imgFile, tableRectangles, 0, [], function (allTableOcrResults){
+                    let allResults = { formOcrResult: formOcrResult.payload, tableOcrResult: allTableOcrResults }
+                    results.push({ page: idx + 1, allResults: allResults })
+
+                    ParserLogic.ocrImages2(images, idx + 1, pageInfos, results, callback, callbackError)
+                })
+            }, function(err)
+            {
+                ParserLogic.ocrTable(imgFile, tableRectangles, 0, [], function (allTableOcrResults){
+                    let allResults = { formOcrResult: null, tableOcrResult: allTableOcrResults }
+                    results.push({ page: idx + 1, allResults: allResults })
+
+                    ParserLogic.ocrImages2(images, idx + 1, pageInfos, results, callback, callbackError)
+                })
+
+            })
+
+
+
+        }
+        else 
+        {
+            if(callback != null)
+                callback(results);
+        }
+
+    }
+
+    static async ocrImages2Old(images, idx, pageInfos, results, callback, callbackError)
+    {
+        if(idx < images.length)
+        {
+            let guidelineInfo =  null;
+            pageInfos.map((item)=>{
+                if(item.page == images[idx].page)
+                    guidelineInfo = item.guidelineInfo;
+            })
+
+            console.log("ocrImages2 : guidelineinfo for  " + images[idx].page)
+            console.log(guidelineInfo);
+
+            let [ formRectangles, tableRectangles ] = ParserLogic.createRectangles(guidelineInfo);
 
             let upload_url = process.env.UPLOADER_API + "/upload/gcs/" + process.env.GCP_PROJECT;
             upload_url += "/" + process.env.GCP_UPLOAD_BUCKET + "/" + process.env.GCP_UPLOAD_FOLDER;
 
             let fname= images[idx].image;
 
+            console.log('ocrImages2: uploading image to be processed ocr-service page : ' + images[idx].page)
             httpclient.upload(upload_url, fname).then((response)=>{
 
                 let imgFile = response.payload;
                 imgFile = imgFile.replace('gs://', 'https://storage.googleapis.com/')
+                console.log("ocrImages2 : uploaded result : " + imgFile)
 
                 imgFile = encodeURIComponent(imgFile)
                 let ocrurl = process.env.OCR_API + '/imageboxes2text?url=' + imgFile; 
@@ -93,7 +215,7 @@ class ParserLogic
 
                 
                 ParserLogic.remoteOcrEffort = 0;
-                console.log("remoteOcr")
+                console.log("ocrImages2 : remoteOcr")
                 console.log(ocrurl);
                 
                 ParserLogic.remoteOcr(ocrurl, param, function(formOcrResult){
@@ -102,7 +224,7 @@ class ParserLogic
                         let allResults = { formOcrResult: formOcrResult.payload, tableOcrResult: allTableOcrResults }
                         results.push({ page: idx + 1, allResults: allResults })
 
-                        ParserLogic.ocrImages2(images, idx + 1, guidelineInfo, totalForm, totalTable, results, callback)
+                        ParserLogic.ocrImages2(images, idx + 1, pageInfos, results, callback, callbackError)
                     })
                 }, function(err)
                 {
@@ -110,7 +232,7 @@ class ParserLogic
                         let allResults = { formOcrResult: null, tableOcrResult: allTableOcrResults }
                         results.push({ page: idx + 1, allResults: allResults })
 
-                        ParserLogic.ocrImages2(images, idx + 1, guidelineInfo, totalForm, totalTable, results, callback)
+                        ParserLogic.ocrImages2(images, idx + 1, pageInfos, results, callback, callbackError)
                     })
 
                 })
@@ -119,7 +241,9 @@ class ParserLogic
 
             }).catch((err)=>{
                 //console.log(err)
-                console.log("error");
+                console.log("ocrImages2.error : upload image for ocr seervice");
+                i(callbackError != null)
+                    callbackError({ success: false, error: err, message : "ocrImages2.error : upload image for ocr seervice"})
             })
 
 
@@ -195,7 +319,7 @@ class ParserLogic
 
         }).catch((err)=>{
             console.log('remoteOcrAgain.err')
-            console.log(err)
+            //console.log(err)
             if(callbackError != null)
                 callbackError(err)
         })
@@ -244,8 +368,21 @@ class ParserLogic
         return [ formRectangles, tableRectangles ]
     }
 
+    static async getPageGuidelineInfo(document, page)
+    {
+        let pageTemplate = await PageTemplateModel.findOne({ where: { [Op.and]: [
+            { document: { [Op.iLike] : document }},
+            {  page: page}
+        ] }})
 
-    static async convert2images(pdfUrl, w, h)
+        if(pageTemplate != null)
+            return pageTemplate.tableTemplate;
+        else 
+            return null;
+    }
+
+
+    static async convert2images(pdfUrl, pageInfos)
     {
 
         let promise = new Promise((resolve, reject)=>{
@@ -253,13 +390,17 @@ class ParserLogic
 
             httpclient.download(pdfUrl, tmpDownloadedPdf ).then(()=>{
                 
-                ImageProcessor.pdf2images(tmpDownloadedPdf, w, h).then((images)=>{
+                console.log("calling ImageProcessor.pdf2imageWithPageInfo")
+                ImageProcessor.pdf2imagesWithPageInfos(tmpDownloadedPdf, pageInfos).then((images)=>{
 
                     resolve(images);
-                })
-                
 
-                //resolve(tmpDownloadedPdf)
+                }).catch(err=>{
+                    reject(err)
+                })
+
+            }).catch((err)=>{
+                reject(err);
             })
         })
 

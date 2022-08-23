@@ -6,6 +6,7 @@ const DocumentFormsModel  = require( './modules/models/document_forms_model')
 const OrganizationModel  = require( './modules/models/organization_model')
 const UsersModel  = require( './modules/models/users_model')
 const TemplateModel  = require( './modules/models/templatemodel')
+const PageTemplateModel  = require( './modules/models/pagetemplatemodel')
 const OcrSessionModel  = require( './modules/models/ocrsessionmodel')
 
 
@@ -40,7 +41,7 @@ class Initialization {
         DocumentFormTemplatesModel.initialize(sequelize, force);
         TemplateModel.initialize(sequelize, force);
         OcrSessionModel.initialize(sequelize, force);
-
+        PageTemplateModel.initialize(sequelize, force);
 
         await sequelize.sync();
     }

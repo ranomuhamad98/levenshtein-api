@@ -49,6 +49,25 @@ class ImageProcessor
         return promise;
     }
 
+    static async pdf2imagesWithPageInfos(pdfPath, pageInfos)
+    {
+        let promise = new Promise((resolve, reject)=>{
+
+            console.log("pdf2Images")
+
+
+            let totalPages = 1000;
+            ImageProcessor.pdf2imageWithPageInfo(pdfPath, pageInfos, 1, totalPages, [], function(resultImages){
+                console.log("resultImages")
+                console.log(resultImages)
+                resolve(resultImages)
+            })
+
+            
+        })
+        return promise;
+    }
+
     static async pdf2image(pdfPath, w, h, idx, totalPages, resultimages, callback )
     {
         console.log('pdf2image.size')
@@ -89,6 +108,68 @@ class ImageProcessor
 
                 resultimages.push({ page: idx, image: saveFolder + "/" + result.name})
                 ImageProcessor.pdf2image(pdfPath,  w, h, idx + 1, totalPages, resultimages, callback)
+            }).catch((err)=>{
+                console.log("error storeAsImage")
+                console.log(err)
+
+                if(callback != null)
+                    callback(resultimages)
+            })
+        }
+        else 
+        {
+            if(callback != null)
+                callback(resultimages)
+        }
+
+    }
+
+    static async pdf2imageWithPageInfo(pdfPath, pageInfos, idx, totalPages, resultimages, callback )
+    {
+        console.log('pdf2image.size')
+        if(idx <= totalPages)
+        {
+            console.log("pdf2image " + idx)
+            let basename = path.basename(pdfPath)
+            let outputfname = basename + ".page";
+
+            let saveFolder = "/tmp"
+
+            let pageInfo = null;
+            pageInfos.map((itm)=>{
+                if(itm.page == idx)
+                    pageInfo  =  itm;
+            })
+
+
+            let options =
+            {
+                quality: 1000,
+                density: 1000,
+                width: 600,
+                height: 600,
+                saveFilename: outputfname,
+                savePath: saveFolder,
+                format: "png",
+            }
+
+            if(pageInfo !=  null)
+            {
+                options.width = pageInfo.width;
+                options.height = pageInfo.height;
+            }
+
+            console.log("options")
+            console.log(options)
+            
+            const storeAsImage = fromPath(pdfPath, options);
+            storeAsImage(idx).then((result)=>{
+                console.log("result")
+                console.log(result)
+
+                resultimages.push({ page: idx, image: saveFolder + "/" + result.name})
+                ImageProcessor.pdf2imageWithPageInfo(pdfPath,  pageInfos, idx + 1, totalPages, resultimages, callback)
+            
             }).catch((err)=>{
                 console.log("error storeAsImage")
                 console.log(err)
