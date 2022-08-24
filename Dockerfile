@@ -21,18 +21,6 @@ RUN npm install
 # Bundle app source
 COPY . .
 
-ENV APPLICATION_PORT 8080 
-ENV GCP_PROJECT "levenshtein-dev"
-ENV GCP_UPLOAD_BUCKET "levenshtein-upload-bucket"
-ENV GCP_UPLOAD_FOLDER "images"
-ENV DBHOST ""
-ENV DBNAME "levenshtein-api"
-ENV DBUSER ""
-ENV DBPASSWORD ""
-ENV DBENGINE "postgresql"
-ENV UPLOADER_API "https://gcsfileuploader-v2-dot-levenshtein-dev.et.r.appspot.com"
-#ENV OCR_API "https://tesseract-ocr-service-owlowcpkna-et.a.run.app"
-
 
 EXPOSE 8080
 CMD [ "node", "app.js" ]
