@@ -154,7 +154,7 @@ class ParserLogic
 
                 ParserLogic.ocrTable(imgFile, tableRectangles, 0, [], function (allTableOcrResults){
                     let allResults = { formOcrResult: formOcrResult.payload, tableOcrResult: allTableOcrResults }
-                    results.push({ page: idx + 1, allResults: allResults })
+                    results.push({ page: images[idx].page, allResults: allResults })
 
                     ParserLogic.ocrImages2(images, idx + 1, pageInfos, results, callback, callbackError)
                 })
@@ -162,7 +162,7 @@ class ParserLogic
             {
                 ParserLogic.ocrTable(imgFile, tableRectangles, 0, [], function (allTableOcrResults){
                     let allResults = { formOcrResult: null, tableOcrResult: allTableOcrResults }
-                    results.push({ page: idx + 1, allResults: allResults })
+                    results.push({ page: images[idx].page, allResults: allResults })
 
                     ParserLogic.ocrImages2(images, idx + 1, pageInfos, results, callback, callbackError)
                 })
@@ -267,6 +267,11 @@ class ParserLogic
 
             let param = { positions: tableRectangle.tableRectangles };
 
+            console.log("================= ocrTable ========================")
+            console.log(ocrurl)
+            //console.log(JSON.stringify(param))
+            console.log("================= end of ocrTable ========================")
+
             ParserLogic.remoteOcr(ocrurl, param, function(tableOcrResult){
 
                 results.push({ tableID: tableRectangle.tableID, result: tableOcrResult.payload } )
@@ -319,7 +324,7 @@ class ParserLogic
 
         }).catch((err)=>{
             console.log('remoteOcrAgain.err')
-            //console.log(err)
+            console.log(err)
             if(callbackError != null)
                 callbackError(err)
         })
