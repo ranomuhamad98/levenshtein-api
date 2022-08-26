@@ -157,7 +157,8 @@ class OcrSessionLogic extends CommonLogic {
             let formResult = ocrResult.allResults.formOcrResult.positions;
             let tableResult = ocrResult.allResults.tableOcrResult;
 
-            
+            page = ocrResult.page;
+
             formResult.map((formOcr)=>{
                 let rowForm = [];
                 rowForm.push(formOcr.fieldname.trim().replace(/\n/gi, ""))
@@ -171,7 +172,7 @@ class OcrSessionLogic extends CommonLogic {
             let newTable = OcrSessionLogic.getTableArray(tableResult, page)
             tables.push(newTable)
 
-            page++;
+            //page++;
         })
 
 
@@ -217,7 +218,8 @@ class OcrSessionLogic extends CommonLogic {
             let headerRow = [];
 
             //Set table's array's header
-            if(tableIdx == 0)
+      
+            if(page == 1)
             {
                 headers.map((header)=>{
                     headerRow.push(header.fieldname)
@@ -225,6 +227,8 @@ class OcrSessionLogic extends CommonLogic {
                 headerRow.push("Page")
                 newTable.push(headerRow)
             }
+
+            
 
 
             //Fill table's array content
