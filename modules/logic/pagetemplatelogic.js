@@ -82,6 +82,25 @@ class PageTemplateLogic extends CommonLogic {
             throw {success: false, error: err, message: err.message}
         }
     }
+
+    static async findByDocument(document)
+    {
+        try 
+        {
+            let where = { }
+            where = { where: { document : { [Op.iLike] : document }  } }
+            let dbPageTemplate = await PageTemplateModel.findAndCountAll(where)
+            if(dbPageTemplate == null)
+                return { success: false, error: null, message: "No template for the document"}
+            else 
+                return {success: true, payload: dbPageTemplate}
+
+        }
+        catch (err)
+        {
+            throw {success: false, error: err, message: err.message}
+        }
+    }
 }
 
 module.exports = PageTemplateLogic;

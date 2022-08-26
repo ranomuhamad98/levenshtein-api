@@ -23,7 +23,19 @@ class PageTemplatesRouter extends CrudRouter{
             logic.findByDocumentAndPage(document, page).then((response)=>{
                 res.send(response)
             }).catch(err =>{
-                console.log("Error: create-update")
+                console.log("Error: get-by-document-page : "  + document + ", " + page)
+                console.log(err)
+                res.send(err)
+            })
+        })
+
+        router.get("/get-by-document/:document", (req, res)=>{
+            let document = req.params.document;
+
+            logic.findByDocument(document).then((response)=>{
+                res.send(response)
+            }).catch(err =>{
+                console.log("Error: get-by-document : " + document)
                 console.log(err)
                 res.send(err)
             })

@@ -149,7 +149,7 @@ class ParserLogic
             ParserLogic.remoteOcrEffort = 0;
             console.log("ocrImages2 : remoteOcr for page : " + images[idx].page)
             console.log(ocrurl);
-            
+            console.log(JSON.stringify(param))
             ParserLogic.remoteOcr(ocrurl, param, function(formOcrResult){
 
                 ParserLogic.ocrTable(imgFile, tableRectangles, 0, [], function (allTableOcrResults){
@@ -269,7 +269,7 @@ class ParserLogic
 
             console.log("================= ocrTable ========================")
             console.log(ocrurl)
-            //console.log(JSON.stringify(param))
+            console.log(JSON.stringify(param))
             console.log("================= end of ocrTable ========================")
 
             ParserLogic.remoteOcr(ocrurl, param, function(tableOcrResult){

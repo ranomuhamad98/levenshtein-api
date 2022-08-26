@@ -86,14 +86,9 @@ class OcrSessionLogic extends CommonLogic {
         let promise = new Promise(async (resolve, reject)=>{
             let model =  this.getModel();
             let ocrSession = await model.findOne({where: { id: sessionId }})
-
-            
-
-            let ocrResults = ocrSession.ocrResult;
- 
+            let ocrResults = ocrSession.ocrResult; 
             ocrResults = atob(ocrResults)
             ocrResults = JSON.parse(ocrResults)
-
 
 
             let allArrayResults = OcrSessionLogic.getResultsArray(ocrResults);
@@ -159,7 +154,7 @@ class OcrSessionLogic extends CommonLogic {
         //Ocr result per page
         ocrResults.map((ocrResult)=>{
             
-            let formResult = ocrResult.allResults.formOcrResult;
+            let formResult = ocrResult.allResults.formOcrResult.positions;
             let tableResult = ocrResult.allResults.tableOcrResult;
 
             
@@ -215,17 +210,21 @@ class OcrSessionLogic extends CommonLogic {
         let tables = [];
         let tableIdx = 0;
         tableResults.map((tableResult)=>{
-            let result = tableResult.result;
+            let result = tableResult.result.positions;
 
-            //Set table's array's header
             let headers = result[0];
             let newTable = [];
             let headerRow = [];
-            headers.map((header)=>{
-                headerRow.push(header.fieldname)
-            })
-            headerRow.push("Page")
-            newTable.push(headerRow)
+
+            //Set table's array's header
+            if(tableIdx == 0)
+            {
+                headers.map((header)=>{
+                    headerRow.push(header.fieldname)
+                })
+                headerRow.push("Page")
+                newTable.push(headerRow)
+            }
 
 
             //Fill table's array content
