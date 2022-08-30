@@ -13,6 +13,8 @@ RUN apt-get install ghostscript -y
 RUN apt-get install graphicsmagick -y
 RUN npm install pm2 -g
 
+ENV GCP_PROCESSING_BUCKET levenshtein-upload-bucket-triggerfunction
+
 
 RUN npm install
 # If you are building your code for production

@@ -10,7 +10,7 @@ class OcrSessionRouter extends CrudRouter{
             let id = req.params.ocrsessionid
             logic.downloadOcrResult(id).then((response)=>{
                 //res.send({ success: true });
-                res.sendFile(response)
+                res.send({ success: true, payload: response })
             }).catch((err)=>{
                 res.send({success: false, error: err, message: err.message})
             })

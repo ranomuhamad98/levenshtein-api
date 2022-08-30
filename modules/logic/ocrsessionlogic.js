@@ -1,6 +1,8 @@
 const { Sequelize, Model, DataTypes } = require('sequelize');
 const { Op } = require("sequelize");
 var fs = require('fs');
+var httpclient = require("../utils/HttpClient")
+
 
 
 const CommonLogic = require("./commonlogic");
@@ -86,9 +88,12 @@ class OcrSessionLogic extends CommonLogic {
         let promise = new Promise(async (resolve, reject)=>{
             let model =  this.getModel();
             let ocrSession = await model.findOne({where: { id: sessionId }})
+            let sessionID = ocrSession.sessionID;
             let ocrResults = ocrSession.ocrResult; 
             ocrResults = atob(ocrResults)
             ocrResults = JSON.parse(ocrResults)
+
+            let tmpFiles = [];
 
 
             let allArrayResults = OcrSessionLogic.getResultsArray(ocrResults);
@@ -98,21 +103,21 @@ class OcrSessionLogic extends CommonLogic {
 
 
 
-            let savedFolder  = "/tmp/ocrsession_" + General.randomString(10);
+            let savedFolder  = "/tmp/" + sessionID;
             fs.mkdirSync(savedFolder);
             let formCsvFile = savedFolder + "/forms.csv"
             fs.writeFileSync(formCsvFile, formCsv)
+            tmpFiles.push(formCsvFile)
 
 
             //console.log(formCsv)
             let tableIdx = 1;
             tableArrays.map((tableArray)=>{
 
-
-
                 let tableCsv = convertArrayToCSV(tableArray, { separator: "," })
                 let tableCsvFile = savedFolder + "/table_" + tableIdx + ".csv"
                 fs.writeFileSync(tableCsvFile, tableCsv)
+                tmpFiles.push(tableCsvFile)
 
 
                 tableIdx++;
@@ -121,9 +126,42 @@ class OcrSessionLogic extends CommonLogic {
             let ss = savedFolder.replace("/tmp/", "");
             let outputFile = "/tmp/" + ss + ".zip";
 
-
             FileUtil.zipDirectory(savedFolder, outputFile).then(()=>{
-                resolve(outputFile);
+                
+                let upload_url = process.env.UPLOADER_API + "/upload/gcs/" + process.env.GCP_PROJECT;
+                upload_url += "/" + process.env.GCP_PROCESSING_BUCKET + "/";
+
+
+
+                let uploadedFolder = "ocrzipfile"
+                uploadedFolder = encodeURIComponent(uploadedFolder)
+                upload_url += uploadedFolder;
+
+                console.log("upload_url")
+                console.log(upload_url)
+                console.log(outputFile)
+
+                httpclient.upload(upload_url, outputFile).then((response)=>{
+
+                    console.log("upload file")
+                    console.log(response)
+                    //fs.unlinkSync(outputFile);
+                    tmpFiles.map((file)=>{
+                        fs.unlinkSync(file)
+                    })
+
+                    let newOutputfile = outputFile.replace("/tmp/", "")
+                    newOutputfile = newOutputfile.replace(".zip", ".csv")
+                    newOutputfile = "gs://" + process.env.GCP_UPLOAD_BUCKET + "/after_process_zip/" + newOutputfile;
+
+                    resolve({ uri: newOutputfile, project: process.env.GCP_PROJECT})
+                    
+                }).catch((e)=>{
+                    console.log("error upload")
+                    console.log(e)
+                })
+
+
             }).catch((e)=> {
                 console.log("error")
 

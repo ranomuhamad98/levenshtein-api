@@ -5,6 +5,8 @@ class UsersModel extends Model {
     { 
         super.init({
             email: DataTypes.STRING,
+            userPassword: DataTypes.STRING,
+            userRole: DataTypes.STRING,
             organization_code: DataTypes.STRING,
             firstname: DataTypes.STRING,
             lastname: DataTypes.STRING,
