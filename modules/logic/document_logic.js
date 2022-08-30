@@ -27,7 +27,7 @@ class DocumentLogic extends CommonLogic {
 
     static getOrder()
     {
-        let order = [['upload_date', 'DESC']];
+        let order = [['updatedAt', 'DESC']];
         return order;
     }
 
@@ -55,6 +55,40 @@ class DocumentLogic extends CommonLogic {
             throw e;
         }
 
+    }
+
+    static async updateDateByDocumentName(document)
+    {
+
+        try
+        {        
+            const CurrentModel = this.getModel();
+            let f = await CurrentModel.findAll({ where: { filename :  { [Op.like] : document } }})
+            if(f.length == 0)
+            {
+                return { success: false, message: "No document"}
+            }
+            else 
+            {
+                f = f[0]
+                f = JSON.parse(JSON.stringify(f))
+                let dt = new Date().toISOString();
+                f.updatedAt = dt;
+                //console.log("date")
+                //console.log(dt)
+                //console.log(f.id)
+                //console.log(CurrentModel)   
+                let result = await CurrentModel.update(f, { where:{ id: f.id } })
+                //console.log(f)
+                //console.log(result)
+                return { success: true, payload: f}
+            }
+        }
+        catch(e)
+        {
+            console.log(e)
+            throw e;
+        }
     }
 }
 
