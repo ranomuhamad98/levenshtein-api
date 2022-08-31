@@ -2,15 +2,5 @@ service: levenshtein-api
 runtime: nodejs16
 env: standard
 env_variables:
-  APPLICATION_PORT: "8080" 
-  GCP_PROJECT: "levenshtein-dev"
-  GCP_UPLOAD_BUCKET: "levenshtein-upload-bucket"
-  GCP_UPLOAD_FOLDER: "images"
-  DBHOST: "34.101.122.219"
-  DBNAME: "levenshtein-api"
-  DBUSER: "nodeuser"
-  DBPASSWORD: "RotiKeju98*"
-  DBENGINE: "postgresql"
-  UPLOADER_API: "https://gcsfileuploader-v2-dot-levenshtein-dev.et.r.appspot.com"
-  OCR_API: "http://34.101.90.205:8282"
+
 
