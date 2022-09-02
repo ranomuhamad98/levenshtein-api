@@ -9,6 +9,7 @@ const CommonLogic = require("./commonlogic");
 const General = require("../utils/General")
 const FileUtil = require("../utils/File")
 const ParserLogic = require("./parser_logic")
+const Base64 = require("../utils/Base64")
 
 const { convertArrayToCSV } = require('convert-array-to-csv');
 
@@ -65,12 +66,17 @@ class OcrSessionLogic extends CommonLogic {
                 if(results.success)
                 {
                     let sResult = JSON.stringify(results.payload);
-                    sResult = btoa(sResult);
+                    //sResult = btoa(sResult);
+                    sResult = Base64.encode(sResult)
+                    //console.log(sResult)
+
+                    console.log("Done ocr success")
                     model.update({runningStatus: 2, sessionEndDate: Date.now(), ocrResult: sResult}, { where: { id: session.id } })
                     
                 }
                 else
                 {
+                    console.log("Done ocr fail")
                     model.update({runningStatus: 3, sessionEndDate: Date.now()}, { where: { id: session.id } })
 
                 }

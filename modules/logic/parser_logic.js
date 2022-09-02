@@ -32,7 +32,8 @@ class ParserLogic
                     console.log("ocrImages2s...")
                     ParserLogic.ocrImages2(images, 0, pageInfos, [], function(results){
                         
-                        console.log("ocrImages2 done")
+                        console.log("ocrImages2 done. With result: ")
+                        console.log(JSON.stringify(results))
                         resolve({ success: true, payload: results})
 
                     }, function(err){
@@ -124,6 +125,8 @@ class ParserLogic
     {
         if(idx < images.length)
         {
+        //if(idx < 2)
+        //{
             let guidelineInfo =  null;
             pageInfos.map((item)=>{
                 if(item.page == images[idx].page)
@@ -147,21 +150,27 @@ class ParserLogic
             let param = { positions: formRectangles };
             
             ParserLogic.remoteOcrEffort = 0;
-            console.log("ocrImages2 : remoteOcr for page : " + images[idx].page)
+            console.log("------> ocrImages2 : remoteOcr for form in page : " + images[idx].page)
             console.log(ocrurl);
-            console.log(JSON.stringify(param))
+            //console.log(JSON.stringify(param))
             ParserLogic.remoteOcr(ocrurl, param, function(formOcrResult){
 
-                ParserLogic.ocrTable(imgFile, tableRectangles, 0, [], function (allTableOcrResults){
-                    let allResults = { formOcrResult: formOcrResult.payload, tableOcrResult: allTableOcrResults }
+                console.log("------> Done ocrImages2 : remoteOcr for form in page : " + images[idx].page)
+                console.log("------> Starting ocrImages2 : remoteOcr for tables in page : " + images[idx].page)
+
+                ParserLogic.ocrTable(imgFile, tableRectangles, 0, [], [], function (allTableOcrResults, ocrTableErrors){
+                    let allResults = { formOcrResult: formOcrResult.payload, tableOcrResult: allTableOcrResults, ocrTableErrors: ocrTableErrors }
                     results.push({ page: images[idx].page, allResults: allResults })
 
                     ParserLogic.ocrImages2(images, idx + 1, pageInfos, results, callback, callbackError)
                 })
             }, function(err)
             {
-                ParserLogic.ocrTable(imgFile, tableRectangles, 0, [], function (allTableOcrResults){
-                    let allResults = { formOcrResult: null, tableOcrResult: allTableOcrResults }
+                console.log("------> Error ocrImages2 : remoteOcr for form in page : " + images[idx].page)
+                console.log("------> Starting ocrImages2 : remoteOcr for tables in page : " + images[idx].page)
+
+                ParserLogic.ocrTable(imgFile, tableRectangles, 0, [], [], function (allTableOcrResults, ocrTableErrors){
+                    let allResults = { formOcrResult: null, tableOcrResult: allTableOcrResults, ocrTableErrors: ocrTableErrors }
                     results.push({ page: images[idx].page, allResults: allResults })
 
                     ParserLogic.ocrImages2(images, idx + 1, pageInfos, results, callback, callbackError)
@@ -220,7 +229,7 @@ class ParserLogic
                 
                 ParserLogic.remoteOcr(ocrurl, param, function(formOcrResult){
 
-                    ParserLogic.ocrTable(imgFile, tableRectangles, 0, [], function (allTableOcrResults){
+                    ParserLogic.ocrTable(imgFile, tableRectangles, 0, [],[], function (allTableOcrResults){
                         let allResults = { formOcrResult: formOcrResult.payload, tableOcrResult: allTableOcrResults }
                         results.push({ page: idx + 1, allResults: allResults })
 
@@ -228,7 +237,7 @@ class ParserLogic
                     })
                 }, function(err)
                 {
-                    ParserLogic.ocrTable(imgFile, tableRectangles, 0, [], function (allTableOcrResults){
+                    ParserLogic.ocrTable(imgFile, tableRectangles, 0, [],[], function (allTableOcrResults){
                         let allResults = { formOcrResult: null, tableOcrResult: allTableOcrResults }
                         results.push({ page: idx + 1, allResults: allResults })
 
@@ -256,31 +265,32 @@ class ParserLogic
 
     }
 
-    static ocrTable(imageFile, tableRectangles, idx, results, callback)
+    static ocrTable(imageFile, tableRectangles, idx, results, errors, callback, callbackError)
     {
         
         if(idx < tableRectangles.length)
         {
             let ocrurl = process.env.OCR_API + '/image2dboxes2text?url=' + imageFile; 
-
             let tableRectangle = tableRectangles[idx];
-
             let param = { positions: tableRectangle.tableRectangles };
 
             console.log("================= ocrTable ========================")
             console.log(ocrurl)
-            console.log(JSON.stringify(param))
-            console.log("================= end of ocrTable ========================")
+            //console.log(JSON.stringify(param))
+            //console.log("================= end of ocrTable ========================")
 
             ParserLogic.remoteOcr(ocrurl, param, function(tableOcrResult){
+                console.log("=================done ocrTable ========================")
 
                 results.push({ tableID: tableRectangle.tableID, result: tableOcrResult.payload } )
-                ParserLogic.ocrTable(imageFile, tableRectangles, idx + 1, results, callback)
+                ParserLogic.ocrTable(imageFile, tableRectangles, idx + 1, results, errors, callback, callbackError)
 
             }, function(err){
 
-                results.push({ tableID: tableRectangle.tableID, result: null, error: err } )
-                ParserLogic.ocrTable(imageFile, tableRectangles, idx + 1, results, callback)
+                console.log("=================error ocrTable ========================")
+                console.log(err)
+                errors.push({ tableID: tableRectangle.tableID, result: {}, error: err } )
+                ParserLogic.ocrTable(imageFile, tableRectangles, idx + 1, results, errors, callback, callbackError)
 
             })
 
@@ -288,8 +298,14 @@ class ParserLogic
         else 
         {
             if(callback != null)
-                callback(results);
+                callback(results, errors);
         }
+    }
+
+    static remoteOcrTemp(ocrurl, param, callback, callbackError)
+    {
+        if(callback != null)
+            callback()
     }
 
     static remoteOcr(ocrurl, param, callback, callbackError)
