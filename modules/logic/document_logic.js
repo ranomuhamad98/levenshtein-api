@@ -2,6 +2,8 @@ const { Sequelize, Model, DataTypes } = require('sequelize');
 const { Op } = require("sequelize");
 
 const CommonLogic = require("./commonlogic");
+const HttpClient = require("../utils/HttpClient");
+const PageTemplateModel = require('../models/pagetemplatemodel');
 
 class DocumentLogic extends CommonLogic {
 
@@ -55,6 +57,71 @@ class DocumentLogic extends CommonLogic {
             throw e;
         }
 
+    }
+
+    static async delete(id)
+    {
+        try {
+            let pk = this.getPk();
+            const CurrentModel = this.getModel();
+            let where = {};
+            where[pk] = id;
+            let document = await CurrentModel.findOne({where: where})
+            if(document != null)
+            {
+                let documentFilename = document.filename;
+                documentFilename = documentFilename.replace("gs://", "")
+                let documentFilenames = documentFilename.split("/");
+                let bucetName = documentFilenames[0];
+                let documentPath =  documentFilename.replace(bucetName + "/", "")
+                let project = process.env.GCP_PROJECT;
+                let url =  process.env.UPLOADER_API + "/upload/gcs-delete/" + project + "/" + bucetName + "/" + encodeURIComponent(documentPath)
+                console.log('delete url')
+                console.log(url)
+                HttpClient.get(url).then((response)=>{
+                    console.log(response)
+                }).catch((e)=>{
+                    console.log(e)
+                })
+    
+                let pageDoc = document.filename.replace('gs://', 'https://storage.googleapis.com/')
+                let pageTemplates = await PageTemplateModel.findAll({ where: { document: { [Op.iLike] : pageDoc } } })
+    
+                pageTemplates.map((pg)=>{
+                    let img = pg.pageImageUrl
+                    img = img.replace("https://storage.googleapis.com/", "")
+                    let tmp = img.split("/")
+                    let bucket = tmp[0];
+                    let path = img.replace(bucket + "/", "")
+                    url =  process.env.UPLOADER_API + "/upload/gcs-delete/" + project + "/" + bucket + "/" + encodeURIComponent(path);
+                    
+                    console.log("delete page template image")
+                    console.log(url)
+                    HttpClient.get(url).then((response)=>{
+                        console.log(response)
+                    }).catch((e)=>{
+                        console.log(e)
+                    })
+    
+                })
+    
+                console.log('pageTemplate delete')
+                await PageTemplateModel.destroy({ where: { document: { [Op.iLike] : pageDoc } } })
+
+                console.log("document delete")
+                await super.delete(id)
+
+                return { success: true, payload: {}  }
+            }
+            else 
+                return { success: false, message: 'No such document' }
+            
+        } catch (error) {
+            console.log('delete document error')
+            console.log(error)
+            throw error   
+        }
+        
     }
 
     static async updateDateByDocumentName(document)

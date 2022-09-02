@@ -50,6 +50,21 @@ class HttpClient
         return promise;
     }
 
+    static async get(url)
+    {
+        let promise = new Promise((resolve, reject)=>{
+            axios.get(url)
+            .then(function (response) {
+                resolve(response.data);
+            })
+            .catch(function (error) {
+                reject(error);
+            });
+        });
+
+        return promise;
+    }
+
     static async upload(url, filepath)
     {
         let promise = new Promise((resolve, reject)=>{

@@ -104,7 +104,8 @@ class OcrSessionLogic extends CommonLogic {
 
 
             let savedFolder  = "/tmp/" + sessionID;
-            fs.mkdirSync(savedFolder);
+            if(fs.existsSync(savedFolder) == false)
+                fs.mkdirSync(savedFolder);
             let formCsvFile = savedFolder + "/forms.csv"
             fs.writeFileSync(formCsvFile, formCsv)
             tmpFiles.push(formCsvFile)
@@ -130,7 +131,6 @@ class OcrSessionLogic extends CommonLogic {
                 
                 let upload_url = process.env.UPLOADER_API + "/upload/gcs/" + process.env.GCP_PROJECT;
                 upload_url += "/" + process.env.GCP_PROCESSING_BUCKET + "/";
-
 
 
                 let uploadedFolder = "ocrzipfile"
@@ -249,37 +249,37 @@ class OcrSessionLogic extends CommonLogic {
         let tables = [];
         let tableIdx = 0;
         tableResults.map((tableResult)=>{
-            let result = tableResult.result.positions;
 
-            let headers = result[0];
-            let newTable = [];
-            let headerRow = [];
-
-            //Set table's array's header
-      
-            if(page == 1)
+            if(tableResult.result != null)
             {
-                headers.map((header)=>{
-                    headerRow.push(header.fieldname)
+                let result = tableResult.result.positions;
+
+                let headers = result[0];
+                let newTable = [];
+                let headerRow = [];
+
+                //Set table's array's header
+                if(page == 1)
+                {
+                    headers.map((header)=>{
+                        headerRow.push(header.fieldname)
+                    })
+                    headerRow.push("Page")
+                    newTable.push(headerRow)
+                }
+
+                //Fill table's array content
+                result.map((resultRow)=>{
+                    let newRow = [];
+                    resultRow.map((cell)=>{
+                        newRow.push(cell.text)
+                    })
+                    newRow.push(page)
+                    newTable.push(newRow);
                 })
-                headerRow.push("Page")
-                newTable.push(headerRow)
+
+                tables.push({ tableIDX: tableIdx, arrays: newTable })
             }
-
-            
-
-
-            //Fill table's array content
-            result.map((resultRow)=>{
-                let newRow = [];
-                resultRow.map((cell)=>{
-                    newRow.push(cell.text)
-                })
-                newRow.push(page)
-                newTable.push(newRow);
-            })
-
-            tables.push({ tableIDX: tableIdx, arrays: newTable })
             tableIdx++;
         })
 
