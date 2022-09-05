@@ -12,6 +12,7 @@ const ParserLogic = require("./parser_logic")
 const Base64 = require("../utils/Base64")
 
 const { convertArrayToCSV } = require('convert-array-to-csv');
+const { resolve } = require('path');
 
 
 
@@ -49,6 +50,86 @@ class OcrSessionLogic extends CommonLogic {
         let sessionID = General.randomString(10)
         o.sessionID = "ocr-session-" + sessionID;
         return o;
+    }
+
+
+    static async runOneOcrSession(sessionid, page)
+    {
+        let promise = new Promise(async (resolve, reject)=>{
+
+            let model =  this.getModel();
+            let ocrSession = await model.findOne({where: { sessionID: sessionid }})
+    
+            if(ocrSession != null)
+            {
+                let document = ocrSession.document;
+                document = document.replace("gs://", "https://storage.googleapis.com/")
+                let templateId = ocrSession.templateId;
+                //model.update({runningStatus: 1}, { where: { sessionID: sessionid } })
+                ParserLogic.parseOnePdf(document,  page).then((results)=>{
+    
+                    if(results.success)
+                    {
+                        let sResult = JSON.stringify(results.payload);
+                        //sResult = btoa(sResult);
+                        sResult = Base64.encode(sResult)
+                        //console.log(sResult)
+
+                        if(results.payload.length > 0)
+                        {
+                            let res  = results.payload[0]
+
+                            //get original ocr result
+                            let originalOcrResult  =  ocrSession.ocrResult;
+                            originalOcrResult  = Base64.decode(originalOcrResult)
+                            originalOcrResult = JSON.parse(originalOcrResult)
+
+                            //find the will be updated original ocr result by page
+                            //and update it.
+                            let idx = 0;
+                            originalOcrResult.map((ocrRes)=>{
+                                if(ocrRes.page == res.page)
+                                {
+                                    originalOcrResult[idx] = res;
+                                }
+                                idx++;
+                            })
+
+                            //Convert back originalOCrResult to base64 encoded
+                            originalOcrResult = JSON.stringify(originalOcrResult)
+                            originalOcrResult = Base64.encode(originalOcrResult)
+
+                            //Save it to database
+                            model.update({runningStatus: 2, sessionEndDate: Date.now(), ocrResult: originalOcrResult}, { where: { id: ocrSession.id } })
+
+                            resolve(results.payload)
+                            console.log("Done ocr success")
+                        }
+                        else 
+                        {
+                            reject({ message: "OCR for page " + page + " of session " + sessionid + " Failed" })
+                        }
+                        //model.update({runningStatus: 2, sessionEndDate: Date.now(), ocrResult: sResult}, { where: { id: ocrSession.id } })
+                        
+                    }
+                    else
+                    {
+                        reject(results)
+                        console.log("Done ocr fail")
+                        //model.update({runningStatus: 3, sessionEndDate: Date.now()}, { where: { id: ocrSession.id } })
+    
+                    }
+                }).catch((err)=>{
+                    let sError = JSON.stringify(err);
+                    console.log("runOneOcrSession()")
+                    console.log(err)
+                    reject(err)
+                    //model.update({runningStatus: 3, sessionEndDate: Date.now(), error: err.message}, { where: { id: ocrSession.id } })
+                })
+            }
+        })
+
+        return promise;
     }
 
     static async runAllOcrSessions()

@@ -22,6 +22,18 @@ class OcrSessionRouter extends CrudRouter{
             res.send({ success: true });
         })
 
+        router.get("/run-ocr-session/:sessionid/:page", (req, res)=>{
+            let sessionid = req.params.sessionid;
+            let page = req.params.page;
+
+            logic.runOneOcrSession(sessionid, page).then((payload)=>{
+                res.send({ success: true, payload: payload });
+            }).catch((err)=>{
+                res.send({ success: false, error: err })
+            })
+            
+        })
+
         router.get("/hello", (req, res)=>{
             res.send({ success: true });
         })

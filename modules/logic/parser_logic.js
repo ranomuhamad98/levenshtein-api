@@ -50,6 +50,45 @@ class ParserLogic
         return promise;
     }
 
+    static parseOnePdf(pdfUrl, page)
+    {
+        //ParserLogic.language = General.randomString(10)
+        ParserLogic.language = 'eng';
+        //fs.copyFileSync("eng.traineddata", ParserLogic.language + ".traineddata")
+
+        console.log('parseAllPdf')
+        let promise = new Promise(async (resolve, reject)=>{
+
+                console.log("getPageTemplates")
+                ParserLogic.getPageInfoFromPageTemplates(pdfUrl).then((pageInfos)=>{
+
+                    let images = []
+                    pageInfos.map((pageInfo)=>{
+                        if(pageInfo.page == page)
+                            images.push({ page: pageInfo.page, image: pageInfo.pageImageUrl })
+                    })
+
+                    console.log("ocrImages2s...")
+                    ParserLogic.ocrImages2(images, 0, pageInfos, [], function(results){
+                        
+                        console.log("ocrImages2 done. With result: ")
+                        console.log(JSON.stringify(results))
+                        resolve({ success: true, payload: results})
+
+                    }, function(err){
+                        reject(err)
+                    })
+                        
+
+
+                }).catch((err)=>{
+                    reject(err)
+                })               
+
+        })
+        return promise;
+    }
+
 
     static parseAllPdfOld(pdfUrl)
     {
