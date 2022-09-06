@@ -180,10 +180,12 @@ class OcrSessionLogic extends CommonLogic {
             ocrResults = atob(ocrResults)
             ocrResults = JSON.parse(ocrResults)
 
+            let document = ocrSession.document;
+
             let tmpFiles = [];
 
 
-            let allArrayResults = OcrSessionLogic.getResultsArray(ocrResults);
+            let allArrayResults = OcrSessionLogic.getResultsArray(ocrResults, document);
             let formArrays = allArrayResults[0];
             let tableArrays = allArrayResults[1];
             let formCsv = convertArrayToCSV(formArrays, { separator: "," })
@@ -226,6 +228,8 @@ class OcrSessionLogic extends CommonLogic {
 
                 console.log("upload_url")
                 console.log(upload_url)
+
+                console.log("outputfile")
                 console.log(outputFile)
 
                 httpclient.upload(upload_url, outputFile).then((response)=>{
@@ -263,11 +267,12 @@ class OcrSessionLogic extends CommonLogic {
         return promise;
     }
 
-    static getResultsArray(ocrResults)
+    static getResultsArray(ocrResults, document)
     {
         let rowForms = []
         let tables = []
         let row = [];
+        row.push("NAMA_FILE")
         row.push("Column")
         row.push("Value")
         row.push("Page")
@@ -286,6 +291,7 @@ class OcrSessionLogic extends CommonLogic {
 
             formResult.map((formOcr)=>{
                 let rowForm = [];
+                rowForm.push(document)
                 rowForm.push(formOcr.fieldname.trim().replace(/\n/gi, ""))
                 rowForm.push(formOcr.text.trim().replace(/\n/gi, ""))
                 rowForm.push(page)
@@ -294,7 +300,7 @@ class OcrSessionLogic extends CommonLogic {
             
 
             //newTable consists all tables in one page
-            let newTable = OcrSessionLogic.getTableArray(tableResult, page)
+            let newTable = OcrSessionLogic.getTableArray(tableResult, page, document)
             tables.push(newTable)
 
             //page++;
@@ -331,7 +337,7 @@ class OcrSessionLogic extends CommonLogic {
         return tablesByIndexes
     }
 
-    static getTableArray(tableResults, page)
+    static getTableArray(tableResults, page, document)
     {
         let tables = [];
         let tableIdx = 0;
@@ -348,18 +354,20 @@ class OcrSessionLogic extends CommonLogic {
                 //Set table's array's header
                 if(page == 1)
                 {
+                    headerRow.push("NAMA_FILE")
                     headers.map((header)=>{
                         headerRow.push(header.fieldname)
                     })
-                    headerRow.push("Page")
+                    headerRow.push("PAGE_NO")
                     newTable.push(headerRow)
                 }
 
                 //Fill table's array content
                 result.map((resultRow)=>{
                     let newRow = [];
+                    newRow.push(document)
                     resultRow.map((cell)=>{
-                        newRow.push(cell.text)
+                        newRow.push(cell.text);
                     })
                     newRow.push(page)
                     newTable.push(newRow);
