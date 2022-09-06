@@ -275,7 +275,7 @@ class OcrSessionLogic extends CommonLogic {
         row.push("NAMA_FILE")
         row.push("Column")
         row.push("Value")
-        row.push("Page")
+        row.push("PAGE_NO")
 
         rowForms.push(row);
 
