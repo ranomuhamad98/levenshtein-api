@@ -48,6 +48,11 @@ class CrudLogic {
         return o;
     }
 
+    static initUpdate(o)
+    {
+        return o;
+    }
+
     static async findAll(where=null, offset=null, limit=null,  order=null)
     {
         try{
@@ -121,6 +126,7 @@ class CrudLogic {
 
     static async update(id,  o)
     {
+        o = this.initUpdate(o)
         let result = this.validateUpdate(o);
         let pk = this.getPk();
         if(result.success){
@@ -129,12 +135,15 @@ class CrudLogic {
                 let where = {};
                 where[pk] = id;
 
+                console.log(o)
                 let newO = await CurrentModel.update(o, { where:  where  });
                 result.payload = newO;
                 return  result;
             }
             catch(error)
             {
+                console.log("update.error")
+                //console.log(error)
                 throw { success: false, message: '', error: error };
             }
             

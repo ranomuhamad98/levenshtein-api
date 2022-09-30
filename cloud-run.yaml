@@ -2,67 +2,89 @@ apiVersion: serving.knative.dev/v1
 kind: Service
 metadata:
   name: levenshtein-api
-  namespace: '164638309604'
-  selfLink: /apis/serving.knative.dev/v1/namespaces/164638309604/services/levenshtein-api
-  uid: 9b862d02-5d1f-4ef1-a40c-58d3fbfde2a2
-  resourceVersion: AAXm+nwOFY4
-  generation: 17
-  creationTimestamp: '2022-08-12T19:06:18.878067Z'
+  namespace: '906144972093'
+  selfLink: /apis/serving.knative.dev/v1/namespaces/906144972093/services/levenshtein-api
+  uid: 569e905f-0c49-4e6e-bf87-5556850b440c
+  resourceVersion: AAXonqRM5nA
+  generation: 2
+  creationTimestamp: '2022-09-14T07:52:58.497299Z'
   labels:
     cloud.googleapis.com/location: asia-southeast2
   annotations:
     run.googleapis.com/client-name: cloud-console
     serving.knative.dev/creator: miftahul.huda@devoteam.com
     serving.knative.dev/lastModifier: miftahul.huda@devoteam.com
-    client.knative.dev/user-image: asia-southeast2-docker.pkg.dev/levenshtein-dev/cloud-run-source-deploy/levenshtein-api
+    client.knative.dev/user-image: asia-southeast2-docker.pkg.dev/lv-tennant-spindo/cloud-run-source-deploy/levenshtein-api
     run.googleapis.com/launch-stage: BETA
     run.googleapis.com/ingress: all
     run.googleapis.com/ingress-status: all
 spec:
   template:
     metadata:
-      name: levenshtein-api-00017-tab
+      name: levenshtein-api-00002-vop
       annotations:
         run.googleapis.com/client-name: cloud-console
-        client.knative.dev/user-image: asia-southeast2-docker.pkg.dev/levenshtein-dev/cloud-run-source-deploy/levenshtein-api
+        client.knative.dev/user-image: asia-southeast2-docker.pkg.dev/lv-tennant-spindo/cloud-run-source-deploy/levenshtein-api
         run.googleapis.com/execution-environment: gen2
         autoscaling.knative.dev/maxScale: '100'
         run.googleapis.com/cpu-throttling: 'false'
     spec:
       containerConcurrency: 80
       timeoutSeconds: 300
-      serviceAccountName: 164638309604-compute@developer.gserviceaccount.com
+      serviceAccountName: 906144972093-compute@developer.gserviceaccount.com
       containers:
-      - image: asia-southeast2-docker.pkg.dev/levenshtein-dev/cloud-run-source-deploy/levenshtein-api
+      - image: asia-southeast2-docker.pkg.dev/lv-tennant-spindo/cloud-run-source-deploy/levenshtein-api
         ports:
         - name: http1
           containerPort: 8080
         env:
+        - name: OCR_API
+          value: https://tesseract-ocr-service-jbzzgstpfa-et.a.run.app
+        - name: APPLICATION_PORT
+          value: '8080'
+        - name: GCP_PROJECT
+          value: lv-tennant-spindo
+        - name: GCP_UPLOAD_BUCKET
+          value: lv-tennant-spindo-upload-bucket
+        - name: GCP_UPLOAD_FOLDER
+          value: images
+        - name: DBHOST
+          value: 34.128.64.18
+        - name: DBNAME
+          value: levenshtein-api
+        - name: DBUSER
+          value: nodeuser
+        - name: DBPASSWORD
+          value: RotiKeju98*
+        - name: DBENGINE
+          value: postgresql
+        - name: UPLOADER_API
+          value: https://gcsfileuploader-v2-dot-lv-tennant-spindo.et.r.appspot.com
         resources:
           limits:
             cpu: 2000m
-            memory: 8Gi
+            memory: 4Gi
   traffic:
   - percent: 100
     latestRevision: true
 status:
-  observedGeneration: 17
+  observedGeneration: 2
   conditions:
   - type: Ready
     status: 'True'
-    lastTransitionTime: '2022-08-24T10:53:00.965353Z'
+    lastTransitionTime: '2022-09-14T08:09:02.306802Z'
   - type: ConfigurationsReady
     status: 'True'
-    lastTransitionTime: '2022-08-24T10:52:55.440110Z'
+    lastTransitionTime: '2022-09-14T08:08:56.235735Z'
   - type: RoutesReady
     status: 'True'
-    lastTransitionTime: '2022-08-24T10:53:01.063566Z'
-  latestReadyRevisionName: levenshtein-api-00017-tab
-  latestCreatedRevisionName: levenshtein-api-00017-tab
+    lastTransitionTime: '2022-09-14T08:09:02.533232Z'
+  latestReadyRevisionName: levenshtein-api-00002-vop
+  latestCreatedRevisionName: levenshtein-api-00002-vop
   traffic:
-  - revisionName: levenshtein-api-00017-tab
+  - revisionName: levenshtein-api-00002-vop
     percent: 100
     latestRevision: true
-  url: https://levenshtein-api-owlowcpkna-et.a.run.app
+  url: https://levenshtein-api-jbzzgstpfa-et.a.run.app
   address:
-    url: https://levenshtein-api-owlowcpkna-et.a.run.app
+    url: https://levenshtein-api-jbzzgstpfa-et.a.run.app

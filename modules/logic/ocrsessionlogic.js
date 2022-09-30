@@ -87,13 +87,21 @@ class OcrSessionLogic extends CommonLogic {
                             //find the will be updated original ocr result by page
                             //and update it.
                             let idx = 0;
+                            let updateIdx = 0;
                             originalOcrResult.map((ocrRes)=>{
                                 if(ocrRes.page == res.page)
                                 {
-                                    originalOcrResult[idx] = res;
+                                    //originalOcrResult[idx] = res;
+                                    //console.log("updating page " + ocrRes.page)
+                                    //console.log(res)
+                                    updateIdx = idx;
                                 }
                                 idx++;
                             })
+
+                            originalOcrResult[updateIdx] = res;
+                            console.log("updating page " + originalOcrResult[updateIdx].page)
+                            console.log(originalOcrResult[updateIdx])
 
                             //Convert back originalOCrResult to base64 encoded
                             originalOcrResult = JSON.stringify(originalOcrResult)

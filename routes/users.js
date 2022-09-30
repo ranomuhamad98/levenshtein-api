@@ -9,6 +9,8 @@ class UsersRouter extends CrudRouter{
             let email = req.body.email;
             let password = req.body.userPassword;
 
+            console.log("login: " + email + ", " + password)
+
             logic.login(email, password).then((response)=>{
                 //res.send({ success: true });
                 res.send(response)
