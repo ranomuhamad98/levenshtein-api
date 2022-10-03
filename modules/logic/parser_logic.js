@@ -6,6 +6,7 @@ const ImageProcessor = require("../utils/ImageProcessor");
 const TemplateModel = require("../models/templatemodel");
 const PageTemplateModel = require("../models/pagetemplatemodel");
 const { Op } = require("sequelize");
+const { call } = require("@google-cloud/vision/build/src/helpers");
 
 
 class ParserLogic 
@@ -192,6 +193,7 @@ class ParserLogic
             console.log("------> ocrImages2 : remoteOcr for form in page : " + images[idx].page)
             console.log(ocrurl);
             //console.log(JSON.stringify(param))
+
             ParserLogic.remoteOcr(ocrurl, param, function(formOcrResult){
 
                 console.log("------> Done ocrImages2 : remoteOcr for form in page : " + images[idx].page)
@@ -225,6 +227,15 @@ class ParserLogic
             if(callback != null)
                 callback(results);
         }
+
+    }
+
+    static ocrForm(ocrurl, param, callback, callbackError)
+    {
+        ParserLogic.remoteOcr(ocrurl, param, function(formOcrResult){
+            if(callback != null)
+                callback(formOcrResult)
+        }, callbackError);
 
     }
 

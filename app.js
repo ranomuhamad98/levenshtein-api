@@ -34,9 +34,14 @@ app.use(function(req, res, next) {
 });
 */
 //Consider all request as application/json
-app.use(express.json({type: '*/*'}));
+//app.use(express.json({type: '*/*'}));
+// Express 3.0
+app.use(express.json({ type: '*/*', limit: '1200mb', extended: true }));
+app.use(express.urlencoded({ limit: '1200mb' }));
+
 // parse application/json
-app.use(bodyParser.json())
+//app.use(bodyParser.json({limit: '1200mb', extended: true}))
+//app.use(bodyParser.urlencoded({limit: '1200mb', extended: true}));
 
 app.use(session({
   store: new DatastoreStore({
