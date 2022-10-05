@@ -288,6 +288,7 @@ class OcrSessionLogic extends CommonLogic {
         rowForms.push(row);
 
         let page= 1;
+        let idx = 1;
 
         //Ocr result per page
         ocrResults.map((ocrResult)=>{
@@ -308,8 +309,10 @@ class OcrSessionLogic extends CommonLogic {
             
 
             //newTable consists all tables in one page
-            let newTable = OcrSessionLogic.getTableArray(tableResult, page, document)
+            let newTable = OcrSessionLogic.getTableArray(tableResult, page, document, idx)
             tables.push(newTable)
+
+            idx++;
 
             //page++;
         })
@@ -345,7 +348,7 @@ class OcrSessionLogic extends CommonLogic {
         return tablesByIndexes
     }
 
-    static getTableArray(tableResults, page, document)
+    static getTableArray(tableResults, page, document, idx)
     {
         let tables = [];
         let tableIdx = 0;
@@ -360,7 +363,7 @@ class OcrSessionLogic extends CommonLogic {
                 let headerRow = [];
 
                 //Set table's array's header
-                if(page == 1)
+                if(idx == 1)
                 {
                     headerRow.push("NAMA_FILE")
                     headers.map((header)=>{
@@ -372,13 +375,22 @@ class OcrSessionLogic extends CommonLogic {
 
                 //Fill table's array content
                 result.map((resultRow)=>{
-                    let newRow = [];
-                    newRow.push(document)
-                    resultRow.map((cell)=>{
-                        newRow.push(cell.text);
-                    })
-                    newRow.push(page)
-                    newTable.push(newRow);
+
+                    //Check if the row cells all empty
+                    let isEmptyLine = OcrSessionLogic.checkIfRowIsEmpty(resultRow)
+
+                    //If not empty put them as result
+                    if(isEmptyLine == false)
+                    {
+                        let newRow = [];
+                        newRow.push(document)
+                        resultRow.map((cell)=>{
+                            newRow.push(cell.text);
+                        })
+                        newRow.push(page)
+                        newTable.push(newRow);
+                    }
+
                 })
 
                 tables.push({ tableIDX: tableIdx, arrays: newTable })
@@ -387,6 +399,19 @@ class OcrSessionLogic extends CommonLogic {
         })
 
         return tables;
+    }
+
+    static checkIfRowIsEmpty(resultRow)
+    {
+        let notEmpty = false;
+        resultRow.map((cell)=>{
+            if(cell.text != null && cell.text.trim().replace(" ", "").length > 0)
+            {
+                notEmpty = true;
+            }
+        })
+
+        return !notEmpty;
     }
 
     
