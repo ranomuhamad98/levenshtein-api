@@ -192,7 +192,7 @@ class ParserLogic
             ParserLogic.remoteOcrEffort = 0;
             console.log("------> ocrImages2 : remoteOcr for form in page : " + images[idx].page)
             console.log(ocrurl);
-            //console.log(JSON.stringify(param))
+            console.log(JSON.stringify(param))
 
             ParserLogic.remoteOcr(ocrurl, param, function(formOcrResult){
 

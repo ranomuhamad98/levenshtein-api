@@ -10,5 +10,7 @@
     { "path" :  "/templates", "router"  : "./routes/templates", "logic" : "./modules/logic/templatelogic" },
     { "path" :  "/parser", "router"  : "./routes/parser", "logic" : "./modules/logic/parser_logic" },
     { "path" :  "/ocrsessions", "router"  : "./routes/ocrsessions", "logic" : "./modules/logic/ocrsessionlogic" },
-    { "path" :  "/pagetemplates", "router"  : "./routes/pagetemplates", "logic" : "./modules/logic/pagetemplatelogic" }
+    { "path" :  "/pagetemplates", "router"  : "./routes/pagetemplates", "logic" : "./modules/logic/pagetemplatelogic" },
+    { "path" :  "/billing", "router"  : "./routes/billingsetting", "logic" : "./modules/logic/billing_logic" }
+
 ]

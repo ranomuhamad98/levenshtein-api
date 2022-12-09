@@ -8,7 +8,7 @@ const UsersModel  = require( './modules/models/users_model')
 const TemplateModel  = require( './modules/models/templatemodel')
 const PageTemplateModel  = require( './modules/models/pagetemplatemodel')
 const OcrSessionModel  = require( './modules/models/ocrsessionmodel')
-
+const BillingSettingModel = require("./modules/models/billingsettingmodel")
 
 const { Sequelize, Model, DataTypes } = require('sequelize');
 const process = require('process');
@@ -42,6 +42,7 @@ class Initialization {
         TemplateModel.initialize(sequelize, force);
         OcrSessionModel.initialize(sequelize, force);
         PageTemplateModel.initialize(sequelize, force);
+        BillingSettingModel.initialize(sequelize, force);
 
         await sequelize.sync();
     }

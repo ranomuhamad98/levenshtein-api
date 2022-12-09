@@ -49,6 +49,7 @@ class OcrSessionLogic extends CommonLogic {
     {
         let sessionID = General.randomString(10)
         o.sessionID = "ocr-session-" + sessionID;
+        o.payable = 1;
         return o;
     }
 
@@ -249,8 +250,19 @@ class OcrSessionLogic extends CommonLogic {
                         fs.unlinkSync(file)
                     })
 
+                    setTimeout(function(){
+                        try
+                        {
+                            fs.unlinkSync(outputFile);
+                        }
+                        catch(e)
+                        {
+
+                        }
+                    }, 1000)
+
                     let newOutputfile = outputFile.replace("/tmp/", "")
-                    newOutputfile = newOutputfile.replace(".zip", ".csv")
+                    newOutputfile = newOutputfile.replace(".zip", ".xls")
                     newOutputfile = "gs://" + process.env.GCP_UPLOAD_BUCKET + "/after_process_zip/" + newOutputfile;
 
                     resolve({ uri: newOutputfile, project: process.env.GCP_PROJECT})
@@ -277,15 +289,22 @@ class OcrSessionLogic extends CommonLogic {
 
     static getResultsArray(ocrResults, document)
     {
+        let rowFormHeader = [];
+        rowFormHeader.push("NAMA_FILE");
+        rowFormHeader.push("PAGE_NO");
+
         let rowForms = []
         let tables = []
         let row = [];
-        row.push("NAMA_FILE")
-        row.push("Column")
-        row.push("Value")
-        row.push("PAGE_NO")
+        let counter = 0;
+        //let firstFormOcrResult = ocrResults[0].allResults.formOcrResult.positions;
+        //row.push("NAMA_FILE")
 
-        rowForms.push(row);
+        //row.push("Column")
+        //row.push("Value")
+        //row.push("PAGE_NO")
+
+        //rowForms.push(row);
 
         let page= 1;
         let idx = 1;
@@ -298,15 +317,23 @@ class OcrSessionLogic extends CommonLogic {
 
             page = ocrResult.page;
 
+            let rowForm = [];
+            rowForm.push(document)
+            rowForm.push(page)
+
             formResult.map((formOcr)=>{
-                let rowForm = [];
-                rowForm.push(document)
-                rowForm.push(formOcr.fieldname.trim().replace(/\n/gi, ""))
+                rowFormHeader.push(formOcr.fieldname.trim().replace(/\n/gi, ""));
                 rowForm.push(formOcr.text.trim().replace(/\n/gi, ""))
-                rowForm.push(page)
-                rowForms.push(rowForm)
             })
-            
+
+            if(counter == 0)
+            {
+                rowForms.push(rowFormHeader);
+                rowFormHeader = [];
+                counter++;
+            }
+
+            rowForms.push(rowForm)
 
             //newTable consists all tables in one page
             let newTable = OcrSessionLogic.getTableArray(tableResult, page, document, idx)
