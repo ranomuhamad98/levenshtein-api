@@ -412,15 +412,22 @@ class ParserLogic
             else if(info.type == "table")
             {
                 let headers = info.headers;
+                let tableRows = info.rows;
                 let rowHeight = info.rows[0][0].height;
                 let initialY = info.rows[0][0].y;
 
                 let rectangleRows = [];
                 let maxRows = 40;
+                if(info.totalRows > 1)
+                    maxRows = info.totalRows;
 
                 for(let i=0; i < maxRows; i++)
                 {
                     let newRow = [];
+                    if(info.totalRows > 1 && i < tableRows.length)
+                    {
+                        rowHeight = tableRows[i].height;
+                    }
                     for(let j = 0; j < headers.length; j++)
                     {
                         let header = headers[j];

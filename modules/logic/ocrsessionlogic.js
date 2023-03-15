@@ -261,8 +261,10 @@ class OcrSessionLogic extends CommonLogic {
                         }
                     }, 1000)
 
+                    let outputFileExt = process.env.OCR_RESULT_EXTENSION
+
                     let newOutputfile = outputFile.replace("/tmp/", "")
-                    newOutputfile = newOutputfile.replace(".zip", ".xls")
+                    newOutputfile = newOutputfile.replace(".zip", "." + outputFileExt)
                     newOutputfile = "gs://" + process.env.GCP_UPLOAD_BUCKET + "/after_process_zip/" + newOutputfile;
 
                     resolve({ uri: newOutputfile, project: process.env.GCP_PROJECT})
