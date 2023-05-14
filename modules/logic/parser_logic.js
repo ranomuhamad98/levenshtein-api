@@ -178,8 +178,11 @@ class ParserLogic
 
             let [ formRectangles, tableRectangles ] = ParserLogic.createRectangles(guidelineInfo);
 
-            let upload_url = process.env.UPLOADER_API + "/upload/gcs/" + process.env.GCP_PROJECT;
-            upload_url += "/" + process.env.GCP_UPLOAD_BUCKET + "/" + process.env.GCP_UPLOAD_FOLDER;
+            //let upload_url = process.env.UPLOADER_API + "/upload/gcs/" + process.env.GCP_PROJECT;
+            //upload_url += "/" + process.env.GCP_UPLOAD_BUCKET + "/" + process.env.GCP_UPLOAD_FOLDER;
+
+            let upload_url = process.env.UPLOADER_API + "/gcs/upload?path=" + process.env.GCP_PROJECT;
+            upload_url += ":" + process.env.GCP_UPLOAD_BUCKET + "/" + process.env.GCP_UPLOAD_FOLDER + "/";
 
             let fname= images[idx].image;
             fname = fname.replace("gs://", "https://storage.googleapis.com/")
@@ -198,7 +201,8 @@ class ParserLogic
 
                 console.log("------> Done ocrImages2 : remoteOcr for form in page : " + images[idx].page)
                 console.log("------> Starting ocrImages2 : remoteOcr for tables in page : " + images[idx].page)
-
+                console.log("---- Table Rectangles----")
+                console.log(JSON.stringify(tableRectangles))
                 ParserLogic.ocrTable(imgFile, tableRectangles, 0, [], [], function (allTableOcrResults, ocrTableErrors){
                     let allResults = { formOcrResult: formOcrResult.payload, tableOcrResult: allTableOcrResults, ocrTableErrors: ocrTableErrors }
                     results.push({ page: images[idx].page, allResults: allResults })
@@ -254,8 +258,11 @@ class ParserLogic
 
             let [ formRectangles, tableRectangles ] = ParserLogic.createRectangles(guidelineInfo);
 
-            let upload_url = process.env.UPLOADER_API + "/upload/gcs/" + process.env.GCP_PROJECT;
-            upload_url += "/" + process.env.GCP_UPLOAD_BUCKET + "/" + process.env.GCP_UPLOAD_FOLDER;
+            //let upload_url = process.env.UPLOADER_API + "/upload/gcs/" + process.env.GCP_PROJECT;
+            //upload_url += "/" + process.env.GCP_UPLOAD_BUCKET + "/" + process.env.GCP_UPLOAD_FOLDER;
+
+            let upload_url = process.env.UPLOADER_API + "/gcs/upload?path=" + process.env.GCP_PROJECT;
+            upload_url += ":" + process.env.GCP_UPLOAD_BUCKET + "/" + process.env.GCP_UPLOAD_FOLDER + "/";
 
             let fname= images[idx].image;
 
@@ -390,7 +397,7 @@ class ParserLogic
 
         }).catch((err)=>{
             console.log('remoteOcrAgain.err')
-            console.log(err)
+            //console.log(err)
             if(callbackError != null)
                 callbackError(err)
         })
@@ -411,10 +418,14 @@ class ParserLogic
             }
             else if(info.type == "table")
             {
+
+
                 let headers = info.headers;
                 let tableRows = info.rows;
                 let rowHeight = info.rows[0][0].height;
                 let initialY = info.rows[0][0].y;
+                let totalRowHeight = 0;
+
 
                 let rectangleRows = [];
                 let maxRows = 40;
@@ -424,17 +435,30 @@ class ParserLogic
                 for(let i=0; i < maxRows; i++)
                 {
                     let newRow = [];
-                    if(info.totalRows > 1 && i < tableRows.length)
+                    let rH = 0;
+                    if(info.totalRows > 1 && i < info.rows.length)
                     {
-                        rowHeight = tableRows[i].height;
+                        rowHeight = info.rows[i][0].height;
+                        rH = initialY + totalRowHeight;
+                        totalRowHeight += rowHeight;
+                    }
+
+                    if(info.totalRows == 1)
+                    {
+                        rH = initialY + (rowHeight * i);
                     }
                     for(let j = 0; j < headers.length; j++)
                     {
-                        let header = headers[j];
-                        let newCell = { x: header.x, y: initialY + (rowHeight * i) , w:header.width, h: rowHeight, row: i, col: j }
-                        newCell.fieldname = header.fieldname;
-                        newRow.push(newCell);
+                        let header = headers[j];      
+                        if(header.fieldname != null)
+                        {
+                            let newCell = { x: header.x, y: rH , w:header.width, h: rowHeight, row: i, col: j }
+                            newCell.fieldname = header.fieldname;
+                            newRow.push(newCell);
+                        }                  
+
                     }
+
                     rectangleRows.push(newRow);
                 }
 

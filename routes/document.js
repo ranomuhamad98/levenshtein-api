@@ -27,6 +27,9 @@ class DocumentRouter extends CrudRouter{
     {
         if(req.session.organization_code == null)
             req.session.organization_code = "DEVOTEAM";
+
+        let username = req.query.username;
+        req.session.username = username;
     }
 }
 

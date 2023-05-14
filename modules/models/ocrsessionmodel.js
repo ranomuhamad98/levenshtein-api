@@ -12,7 +12,8 @@ class OcrSessionModel extends Model {
             ocrResult: DataTypes.TEXT,
             sessionID: DataTypes.STRING,
             error: DataTypes.TEXT,
-            payable: DataTypes.INTEGER
+            payable: DataTypes.INTEGER,
+            executedBy: DataTypes.STRING
         }, 
         { sequelize, modelName: 'ocrsession', tableName: 'ocrsession', force: force });
     }

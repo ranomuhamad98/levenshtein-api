@@ -3,6 +3,7 @@ const { Op } = require("sequelize");
 
 const CommonLogic = require("./commonlogic");
 const OcrSessionModel = require("../models/ocrsessionmodel");
+const DocumentModel = require("../models/document_model")
 const Base64 = require("../utils/Base64"); 
 
 class BillingSettingLogic extends CommonLogic {
@@ -37,6 +38,15 @@ class BillingSettingLogic extends CommonLogic {
 
     static getBillingInfo(date1, date2)
     {
+
+        console.log("=============")
+        console.log(date1)
+        
+        date2 = new Date(date2);
+        date2.setDate(date2.getDate() + 1);
+        console.log(date2)
+        console.log("=============")
+
         let promise = new Promise((resolve, reject)=>{
 
             OcrSessionModel.findAll({
@@ -45,13 +55,11 @@ class BillingSettingLogic extends CommonLogic {
                     [
                         {payable: 1},
                         {sessionStartDate: {
-                            [Op.between] : [ new Date(date1), new Date(date2) ]
+                            [Op.between] : [ new Date(date1), new Date(date2)]
                         }}
                     ]
                 }
             }).then((ocrSessions)=>{
-
-                //console.log(ocrSessions)
 
                 let model = BillingSettingLogic.getModel();
                 model.findAll().then((settings)=>{
@@ -89,6 +97,8 @@ class BillingSettingLogic extends CommonLogic {
 
     static getCostInfo(costPerPage, ocrSessions)
     {
+        //let documents = await DocumentModel.findAll();
+
         let items = [];
         let totalCost = 0;
         ocrSessions.map((ocrSession)=>{
@@ -98,7 +108,9 @@ class BillingSettingLogic extends CommonLogic {
 
             o.sessionID = ocrSession.sessionID;
             o.sessionDate = ocrSession.sessionStartDate;
+            o.executedBy = ocrSession.executedBy;
             o.document = ocrSession.document;
+
             o.totalPage = BillingSettingLogic.getTotalPageFromOcrResult(ocrResult)
             o.totalCost = o.totalPage * costPerPage;
             items.push(o);

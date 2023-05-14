@@ -8,17 +8,23 @@ class UsersRouter extends CrudRouter{
         router.post("/login", (req, res)=>{
             let email = req.body.email;
             let password = req.body.userPassword;
-
-            console.log("login: " + email + ", " + password)
-
             logic.login(email, password).then((response)=>{
-                //res.send({ success: true });
                 res.send(response)
             }).catch((err)=>{
+                console.log("Error")
+                console.log(err)
                 res.send({success: false, error: err, message: err.message})
             })
             
-        })
+        });
+
+        router.get("/signout", (req, res)=>{
+            
+            //req.session.user = null;
+            res.send({success: true})
+            
+            
+        });
 
         return router;
     }

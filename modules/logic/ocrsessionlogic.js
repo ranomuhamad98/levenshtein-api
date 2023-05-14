@@ -195,11 +195,16 @@ class OcrSessionLogic extends CommonLogic {
 
 
             let allArrayResults = OcrSessionLogic.getResultsArray(ocrResults, document);
+
+            console.log("allArrayResults")
+            console.log(allArrayResults)
+
             let formArrays = allArrayResults[0];
             let tableArrays = allArrayResults[1];
             let formCsv = convertArrayToCSV(formArrays, { separator: "," })
 
-
+            //console.log("formCsv")
+            //console.log(formCsv)
 
             let savedFolder  = "/tmp/" + sessionID;
             if(fs.existsSync(savedFolder) == false)
@@ -227,13 +232,18 @@ class OcrSessionLogic extends CommonLogic {
 
             FileUtil.zipDirectory(savedFolder, outputFile).then(()=>{
                 
-                let upload_url = process.env.UPLOADER_API + "/upload/gcs/" + process.env.GCP_PROJECT;
-                upload_url += "/" + process.env.GCP_PROCESSING_BUCKET + "/";
+                //let upload_url = process.env.UPLOADER_API + "/upload/gcs/" + process.env.GCP_PROJECT;
+                //upload_url += "/" + process.env.GCP_PROCESSING_BUCKET + "/";
+
+                let upload_url = process.env.UPLOADER_API + "/gcs/upload?path=" + process.env.DOWNLOAD_OCR_PROCESSING_PROJECT;
+                upload_url += ":" + process.env.DOWNLOAD_OCR_PROCESSING_BUCKET + "/";
 
 
-                let uploadedFolder = "ocrzipfile"
+                let uploadedFolder = process.env.DOWNLOAD_OCR_PROCESSING_FOLDER;
                 uploadedFolder = encodeURIComponent(uploadedFolder)
-                upload_url += uploadedFolder;
+                //upload_url += uploadedFolder;
+                upload_url += uploadedFolder + "/";
+
 
                 console.log("upload_url")
                 console.log(upload_url)
@@ -265,9 +275,9 @@ class OcrSessionLogic extends CommonLogic {
 
                     let newOutputfile = outputFile.replace("/tmp/", "")
                     newOutputfile = newOutputfile.replace(".zip", "." + outputFileExt)
-                    newOutputfile = "gs://" + process.env.GCP_UPLOAD_BUCKET + "/after_process_zip/" + newOutputfile;
+                    //newOutputfile = "gs://" + process.env.DOWNLOAD_OCR_RESULT_BUCKET + "/" + process.env.DOWNLOAD_OCR_RESULT_FOLDER + "/" + newOutputfile;
 
-                    resolve({ uri: newOutputfile, project: process.env.GCP_PROJECT})
+                    resolve({ project: process.env.DOWNLOAD_OCR_RESULT_PROJECT, bucket: process.env.DOWNLOAD_OCR_RESULT_BUCKET, path: process.env.DOWNLOAD_OCR_RESULT_FOLDER + "/" + newOutputfile})
                     
                 }).catch((e)=>{
                     console.log("error upload")
@@ -289,11 +299,34 @@ class OcrSessionLogic extends CommonLogic {
         return promise;
     }
 
-    static getResultsArray(ocrResults, document)
+    static getFormRowHeaders(ocrResults)
     {
         let rowFormHeader = [];
+        let setHeader = false;
         rowFormHeader.push("NAMA_FILE");
         rowFormHeader.push("PAGE_NO");
+        ocrResults.map((ocrResult)=>{
+
+            let formResult = ocrResult.allResults.formOcrResult.positions;
+
+            console.log("formResult=======")
+            console.log(formResult)
+            if(formResult != null && formResult.length > 0 && setHeader == false)
+            {
+                setHeader = true;
+                formResult.map((formOcr)=>{
+                    rowFormHeader.push(formOcr.fieldname.trim().replace(/\n/gi, ""));
+                })
+            }
+
+        });
+
+        return rowFormHeader;
+
+    }
+
+    static getResultsArray(ocrResults, document)
+    {
 
         let rowForms = []
         let tables = []
@@ -308,45 +341,68 @@ class OcrSessionLogic extends CommonLogic {
 
         //rowForms.push(row);
 
+        let rowFormHeader = this.getFormRowHeaders(ocrResults);
+        console.log("rowFormHeader")
+        console.log(rowFormHeader)
+        rowForms.push(rowFormHeader);
+
         let page= 1;
         let idx = 1;
+        let tableHeaderDone = false;
 
         //Ocr result per page
         ocrResults.map((ocrResult)=>{
             
+
+            //console.log("ocrResult")
+            //console.log(ocrResult)
+
             let formResult = ocrResult.allResults.formOcrResult.positions;
             let tableResult = ocrResult.allResults.tableOcrResult;
-
             page = ocrResult.page;
 
-            let rowForm = [];
-            rowForm.push(document)
-            rowForm.push(page)
+            console.log("TABLERESULT")
+            console.log(tableResult)
 
-            formResult.map((formOcr)=>{
-                rowFormHeader.push(formOcr.fieldname.trim().replace(/\n/gi, ""));
-                rowForm.push(formOcr.text.trim().replace(/\n/gi, ""))
-            })
-
-            if(counter == 0)
+            if(tableResult != null && tableResult.length > 0)
             {
-                rowForms.push(rowFormHeader);
-                rowFormHeader = [];
-                counter++;
+
+
+                //newTable consists all tables in one page
+                let newTable = OcrSessionLogic.getTableArray(tableResult, page, document, !tableHeaderDone)
+                if(tableHeaderDone == false)
+                    tableHeaderDone = true;
+                tables.push(newTable)
             }
 
-            rowForms.push(rowForm)
+            let rowForm = [];
 
-            //newTable consists all tables in one page
-            let newTable = OcrSessionLogic.getTableArray(tableResult, page, document, idx)
-            tables.push(newTable)
+            if(formResult != null && formResult.length > 0)
+            {
+                rowForm.push(document)
+                rowForm.push(page)
 
+                formResult.map((formOcr)=>{
+
+                    if(formOcr.text != null)
+                    {
+                        rowForm.push(formOcr.text.trim().replace(/\n/gi, ""))
+                    }
+                })
+
+                rowForms.push(rowForm)
+            }
+            
             idx++;
 
             //page++;
         })
 
+        console.log("TABLES")
+        console.log(JSON.stringify(tables))
 
+        console.log("ROWFORMS")
+        console.log(rowForms)
         let tablesByIndexes = OcrSessionLogic.mergeTableArraysByIndex(tables)
 
         return [ rowForms, tablesByIndexes]
@@ -368,8 +424,11 @@ class OcrSessionLogic extends CommonLogic {
             let tableidx = 0;
             tablesPerPage.map((tablePerIndex)=>{
                 let arr = tablesByIndexes[tableidx]
-                arr = arr.concat(tablePerIndex.arrays)
-                tablesByIndexes[tableidx] = arr;
+                if(arr != null)
+                {
+                    arr = arr.concat(tablePerIndex.arrays)
+                    tablesByIndexes[tableidx] = arr;
+                }
                 tableidx++;
             })
         })
@@ -392,7 +451,7 @@ class OcrSessionLogic extends CommonLogic {
                 let headerRow = [];
 
                 //Set table's array's header
-                if(idx == 1)
+                if(idx == true)
                 {
                     headerRow.push("NAMA_FILE")
                     headers.map((header)=>{

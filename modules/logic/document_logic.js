@@ -75,7 +75,9 @@ class DocumentLogic extends CommonLogic {
                 let bucetName = documentFilenames[0];
                 let documentPath =  documentFilename.replace(bucetName + "/", "")
                 let project = process.env.GCP_PROJECT;
-                let url =  process.env.UPLOADER_API + "/upload/gcs-delete/" + project + "/" + bucetName + "/" + encodeURIComponent(documentPath)
+                //let url =  process.env.UPLOADER_API + "/upload/gcs-delete/" + project + "/" + bucetName + "/" + encodeURIComponent(documentPath)
+                let url =  process.env.UPLOADER_API + "/gcs/delete?path=" + project + ":" + bucetName + "/" + encodeURIComponent(documentPath)
+
                 console.log('delete url')
                 console.log(url)
                 HttpClient.get(url).then((response)=>{
@@ -93,8 +95,9 @@ class DocumentLogic extends CommonLogic {
                     let tmp = img.split("/")
                     let bucket = tmp[0];
                     let path = img.replace(bucket + "/", "")
-                    url =  process.env.UPLOADER_API + "/upload/gcs-delete/" + project + "/" + bucket + "/" + encodeURIComponent(path);
-                    
+                    //url =  process.env.UPLOADER_API + "/upload/gcs-delete/" + project + "/" + bucket + "/" + encodeURIComponent(path);
+                    url =  process.env.UPLOADER_API + "/gcs/delete?path=" + project + ":" + bucket + "/" + encodeURIComponent(path);
+
                     console.log("delete page template image")
                     console.log(url)
                     HttpClient.get(url).then((response)=>{
@@ -156,6 +159,21 @@ class DocumentLogic extends CommonLogic {
             console.log(e)
             throw e;
         }
+    }
+
+    static getDefaultWhere()
+    {
+        if(this.session.username != null)
+        {
+            return { 
+                upload_by: {
+                    [Op.iLike] : this.session.username
+                }
+            }
+        }
+        else
+            return null;
+
     }
 }
 

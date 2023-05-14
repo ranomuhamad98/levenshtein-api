@@ -25,8 +25,12 @@ class CrudRouter {
             me.init(req, res);
             let logic = router.logic;
             logic.session = req.session;
-            console.log(logic);
-            logic.findAll().then(function (os)
+            //console.log(logic);
+
+            let offset = req.query.offset;
+            let limit = req.query.limit;
+
+            logic.findAll(null, offset, limit).then(function (os)
             {
                 res.send(os);
             }).catch(function (err){
@@ -42,8 +46,11 @@ class CrudRouter {
             let logic = router.logic;
             logic.session = req.session;
             let search = req.params.search;
+
+            let offset = req.query.offset;
+            let limit = req.query.limit;
         
-            logic.findByKeyword(search).then(function (os)
+            logic.findByKeyword(search, offset, limit).then(function (os)
             {
                 
                 res.send(os);
@@ -198,7 +205,7 @@ class CrudRouter {
         return router;
     }
 
-    static init(){ 
+    static init(req, res){ 
 
     }
 }

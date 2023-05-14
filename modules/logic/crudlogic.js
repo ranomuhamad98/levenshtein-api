@@ -53,9 +53,15 @@ class CrudLogic {
         return o;
     }
 
+    static initSelect()
+    {
+
+    }
+
     static async findAll(where=null, offset=null, limit=null,  order=null)
     {
         try{
+            this.initSelect();
             const CurrentModel = this.getModel();
             
             let opt = {};
