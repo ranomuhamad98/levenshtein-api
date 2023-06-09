@@ -13,6 +13,8 @@ const Base64 = require("../utils/Base64")
 
 const { convertArrayToCSV } = require('convert-array-to-csv');
 const { resolve } = require('path');
+const UsersModel = require('../models/users_model');
+const TemplateModel = require('../models/templatemodel');
 
 
 
@@ -194,7 +196,10 @@ class OcrSessionLogic extends CommonLogic {
             let tmpFiles = [];
 
 
-            let allArrayResults = OcrSessionLogic.getResultsArray(ocrResults, document);
+            console.log("ocrResults")
+            console.log(ocrResults)
+
+            let allArrayResults = await OcrSessionLogic.getResultsArray(ocrResults, document);
 
             console.log("allArrayResults")
             console.log(allArrayResults)
@@ -202,6 +207,9 @@ class OcrSessionLogic extends CommonLogic {
             let formArrays = allArrayResults[0];
             let tableArrays = allArrayResults[1];
             let formCsv = convertArrayToCSV(formArrays, { separator: "," })
+
+            console.log("formCsv")
+            console.log(formCsv)
 
             //console.log("formCsv")
             //console.log(formCsv)
@@ -303,6 +311,7 @@ class OcrSessionLogic extends CommonLogic {
     {
         let rowFormHeader = [];
         let setHeader = false;
+        rowFormHeader.push("TEMPLATE");
         rowFormHeader.push("NAMA_FILE");
         rowFormHeader.push("PAGE_NO");
         ocrResults.map((ocrResult)=>{
@@ -325,7 +334,7 @@ class OcrSessionLogic extends CommonLogic {
 
     }
 
-    static getResultsArray(ocrResults, document)
+    static async getResultsArray(ocrResults, document)
     {
 
         let rowForms = []
@@ -351,52 +360,71 @@ class OcrSessionLogic extends CommonLogic {
         let tableHeaderDone = false;
 
         //Ocr result per page
-        ocrResults.map((ocrResult)=>{
-            
+        await Promise.all( 
+            ocrResults.map(async (ocrResult)=>{
+                //console.log("ocrResult")
+                //console.log(ocrResult)
 
-            //console.log("ocrResult")
-            //console.log(ocrResult)
+                let formResult = ocrResult.allResults.formOcrResult.positions;
+                let tableResult = ocrResult.allResults.tableOcrResult;
+                page = ocrResult.page;
 
-            let formResult = ocrResult.allResults.formOcrResult.positions;
-            let tableResult = ocrResult.allResults.tableOcrResult;
-            page = ocrResult.page;
+                let templateTitle = "";
 
-            console.log("TABLERESULT")
-            console.log(tableResult)
+                let templateId = ocrResult.templateId;
 
-            if(tableResult != null && tableResult.length > 0)
-            {
+                try{
+
+                    let template = await TemplateModel.findOne({ 
+                        where: {
+                            id: templateId
+                        }
+                    })
+                    templateTitle = template.title;
+                }
+                catch(e)
+                {
+
+                }
 
 
-                //newTable consists all tables in one page
-                let newTable = OcrSessionLogic.getTableArray(tableResult, page, document, !tableHeaderDone)
-                if(tableHeaderDone == false)
-                    tableHeaderDone = true;
-                tables.push(newTable)
-            }
+                console.log("TABLERESULT")
+                console.log(tableResult)
 
-            let rowForm = [];
+                if(tableResult != null && tableResult.length > 0)
+                {
+                    //newTable consists all tables in one page
+                    let newTable = OcrSessionLogic.getTableArray(tableResult, page, document, !tableHeaderDone, templateTitle)
+                    if(tableHeaderDone == false)
+                        tableHeaderDone = true;
+                    tables.push(newTable)
+                }
 
-            if(formResult != null && formResult.length > 0)
-            {
-                rowForm.push(document)
-                rowForm.push(page)
+                let rowForm = [];
 
-                formResult.map((formOcr)=>{
+                if(formResult != null && formResult.length > 0)
+                {
+                    console.log("Here")
+                    rowForm.push(templateTitle)
+                    rowForm.push(document)
+                    rowForm.push(page)
 
-                    if(formOcr.text != null)
-                    {
-                        rowForm.push(formOcr.text.trim().replace(/\n/gi, ""))
-                    }
-                })
+                    formResult.map((formOcr)=>{
 
-                rowForms.push(rowForm)
-            }
-            
-            idx++;
+                        if(formOcr.text != null)
+                        {
+                            rowForm.push(formOcr.text.trim().replace(/\n/gi, ""))
+                        }
+                    })
+                    rowForms.push(rowForm)
 
-            //page++;
-        })
+                }
+                
+                idx++;
+
+                //page++;
+            })
+        );
 
         console.log("TABLES")
         console.log(JSON.stringify(tables))
@@ -410,33 +438,38 @@ class OcrSessionLogic extends CommonLogic {
 
     static mergeTableArraysByIndex(allTables)
     {
-        
-        let totalTablePerPage = allTables[0].length;
-        let tablesByIndexes = []
-
-        for(let i = 0; i < totalTablePerPage; i++)
+        if(allTables != null && allTables.length >0)
         {
-            tablesByIndexes.push([])
+            let totalTablePerPage = allTables[0].length;
+            let tablesByIndexes = []
+    
+            for(let i = 0; i < totalTablePerPage; i++)
+            {
+                tablesByIndexes.push([])
+            }
+    
+            allTables.map((tablesPerPage)=>{
+    
+                let tableidx = 0;
+                tablesPerPage.map((tablePerIndex)=>{
+                    let arr = tablesByIndexes[tableidx]
+                    if(arr != null)
+                    {
+                        arr = arr.concat(tablePerIndex.arrays)
+                        tablesByIndexes[tableidx] = arr;
+                    }
+                    tableidx++;
+                })
+            })
+    
+            return tablesByIndexes
         }
 
-        allTables.map((tablesPerPage)=>{
+        return [];
 
-            let tableidx = 0;
-            tablesPerPage.map((tablePerIndex)=>{
-                let arr = tablesByIndexes[tableidx]
-                if(arr != null)
-                {
-                    arr = arr.concat(tablePerIndex.arrays)
-                    tablesByIndexes[tableidx] = arr;
-                }
-                tableidx++;
-            })
-        })
-
-        return tablesByIndexes
     }
 
-    static getTableArray(tableResults, page, document, idx)
+    static getTableArray(tableResults, page, document, idx, templateTitle)
     {
         let tables = [];
         let tableIdx = 0;
@@ -453,6 +486,7 @@ class OcrSessionLogic extends CommonLogic {
                 //Set table's array's header
                 if(idx == true)
                 {
+                    headerRow.push("TEMPLATE")
                     headerRow.push("NAMA_FILE")
                     headers.map((header)=>{
                         headerRow.push(header.fieldname)
@@ -471,6 +505,7 @@ class OcrSessionLogic extends CommonLogic {
                     if(isEmptyLine == false)
                     {
                         let newRow = [];
+                        newRow.push(templateTitle)
                         newRow.push(document)
                         resultRow.map((cell)=>{
                             newRow.push(cell.text);
@@ -502,6 +537,14 @@ class OcrSessionLogic extends CommonLogic {
         return !notEmpty;
     }
 
+
+    static getModelIncludes()
+    {
+        if(this.session.user.userRole == "SUPER_ADMIN")
+            return [ {model: UsersModel, as: "user"} ];
+        else 
+            return [ {model: UsersModel, as: "user", where: { userRole: { [Op.notLike]: "SUPER_ADMIN" } } } ];
+    }
     
 }
 

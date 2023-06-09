@@ -84,6 +84,10 @@ class CrudLogic {
             if(defaultWhere != null)
                 opt.where = defaultWhere;
 
+            let includes = this.getModelIncludes();
+            if(includes != null)
+                opt.include = includes;
+
             if(where != null)
                 opt.where = {[Op.and]: [
                     opt.where,
@@ -195,6 +199,11 @@ class CrudLogic {
     }
 
     static getDefaultWhere()
+    {
+        return null;
+    }
+
+    static getModelIncludes()
     {
         return null;
     }

@@ -43,6 +43,8 @@ class Initialization {
         OcrSessionModel.initialize(sequelize, force);
         PageTemplateModel.initialize(sequelize, force);
         BillingSettingModel.initialize(sequelize, force);
+        OcrSessionModel.belongsTo(UsersModel, { as: "user", foreignKey: 'executedBy', targetKey: "email"});
+        DocumentModel.belongsTo(UsersModel, { as: "user", foreignKey: 'upload_by', targetKey: "email"});
 
         await sequelize.sync();
     }

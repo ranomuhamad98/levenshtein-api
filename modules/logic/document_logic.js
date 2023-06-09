@@ -4,6 +4,7 @@ const { Op } = require("sequelize");
 const CommonLogic = require("./commonlogic");
 const HttpClient = require("../utils/HttpClient");
 const PageTemplateModel = require('../models/pagetemplatemodel');
+const UsersModel = require("../models/users_model")
 
 class DocumentLogic extends CommonLogic {
 
@@ -163,17 +164,33 @@ class DocumentLogic extends CommonLogic {
 
     static getDefaultWhere()
     {
-        if(this.session.username != null)
+        if(this.session.user != null)
         {
-            return { 
-                upload_by: {
-                    [Op.iLike] : this.session.username
+            if(this.session.user.userRole.indexOf( "ADMIN") == -1)
+            {
+                return { 
+                    upload_by: {
+                        [Op.iLike] : this.session.user.email
+                    }
                 }
             }
+            else
+            {
+                return null;
+            }
+
         }
         else
             return null;
 
+    }
+
+    static getModelIncludes()
+    {
+        if(this.session.user.userRole == "SUPER_ADMIN")
+            return [ {model: UsersModel, as: "user"} ];
+        else 
+            return [ {model: UsersModel, as: "user", where: { userRole: { [Op.notLike]: "SUPER_ADMIN" } } } ];
     }
 }
 

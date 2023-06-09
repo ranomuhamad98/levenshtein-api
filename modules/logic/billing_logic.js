@@ -5,6 +5,7 @@ const CommonLogic = require("./commonlogic");
 const OcrSessionModel = require("../models/ocrsessionmodel");
 const DocumentModel = require("../models/document_model")
 const Base64 = require("../utils/Base64"); 
+const UsersModel = require("../models/users_model")
 
 class BillingSettingLogic extends CommonLogic {
 
@@ -38,7 +39,7 @@ class BillingSettingLogic extends CommonLogic {
 
     static getBillingInfo(date1, date2)
     {
-
+        let me = this;
         console.log("=============")
         console.log(date1)
         
@@ -49,23 +50,41 @@ class BillingSettingLogic extends CommonLogic {
 
         let promise = new Promise((resolve, reject)=>{
 
+            let where = {
+                [Op.and] :
+                [
+                    {payable: 1},
+                    {sessionStartDate: {
+                        [Op.between] : [ new Date(date1), new Date(date2)]
+                    }}
+                ]
+            };
+
+
             OcrSessionModel.findAll({
-                where: {
-                    [Op.and] :
-                    [
-                        {payable: 1},
-                        {sessionStartDate: {
-                            [Op.between] : [ new Date(date1), new Date(date2)]
-                        }}
-                    ]
-                }
+                where: where,
+                include: [ {model: UsersModel, as: "user"} ]
             }).then((ocrSessions)=>{
+
+                //ocrSessions = JSON.stringify(ocrSessions)
+                //ocrSessions = JSON.parse(ocrSessions)
+
+
+                let ocrSessionResults = [];
+                ocrSessions.map((ocrSession)=>{
+                    if( me.session.user.userRole == "SUPER_ADMIN" || (me.session.user.userRole  != "SUPER_ADMIN" && ocrSession.user.userRole != "SUPER_ADMIN"))
+                    {
+                        ocrSessionResults.push(ocrSession);
+                    }
+                });
+
+
+                //console.log(ocrSessionResults)
 
                 let model = BillingSettingLogic.getModel();
                 model.findAll().then((settings)=>{
                     let costPerPage = BillingSettingLogic.getValueFromSetting(settings, "COST_PER_PAGE");
-                    
-                    let info = BillingSettingLogic.getCostInfo(costPerPage, ocrSessions);
+                    let info = BillingSettingLogic.getCostInfo(costPerPage, ocrSessionResults);
                     resolve({ success: true, payload: info });
                 })
                 

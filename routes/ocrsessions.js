@@ -40,6 +40,14 @@ class OcrSessionRouter extends CrudRouter{
 
         return router;
     }
+
+    static init(req, res)
+    {
+        if(req.headers.user != null)
+        {
+            req.session.user  = JSON.parse(req.headers.user);
+        }
+    }
 }
 
 module.exports = OcrSessionRouter;

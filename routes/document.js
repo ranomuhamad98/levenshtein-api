@@ -20,6 +20,8 @@ class DocumentRouter extends CrudRouter{
             })
         })
 
+        
+
         return router;
     }
 
@@ -30,6 +32,12 @@ class DocumentRouter extends CrudRouter{
 
         let username = req.query.username;
         req.session.username = username;
+
+        if(req.headers.user != null)
+        {
+            req.session.user  = JSON.parse(req.headers.user);
+        }
+        
     }
 }
 

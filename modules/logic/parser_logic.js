@@ -27,7 +27,7 @@ class ParserLogic
 
                     let images = []
                     pageInfos.map((pageInfo)=>{
-                        images.push({ page: pageInfo.page, image: pageInfo.pageImageUrl })
+                        images.push({ page: pageInfo.page, image: pageInfo.pageImageUrl, templateId: pageInfo.templateId })
                     })
 
                     console.log("ocrImages2s...")
@@ -66,7 +66,7 @@ class ParserLogic
                     let images = []
                     pageInfos.map((pageInfo)=>{
                         if(pageInfo.page == page)
-                            images.push({ page: pageInfo.page, image: pageInfo.pageImageUrl })
+                            images.push({ page: pageInfo.page, image: pageInfo.pageImageUrl, templateId: pageInfo.templateId })
                     })
 
                     console.log("ocrImages2s...")
@@ -146,6 +146,7 @@ class ParserLogic
                     let infoItem = { page: item.page, width: tableTemplate.imageWidth, height: tableTemplate.imageHeight }
                     infoItem.guidelineInfo = tableTemplate.boxes;
                     infoItem.pageImageUrl = item.pageImageUrl;
+                    infoItem.templateId = item.templateId;
                     infos.push(infoItem);
                 })
 
@@ -205,7 +206,7 @@ class ParserLogic
                 console.log(JSON.stringify(tableRectangles))
                 ParserLogic.ocrTable(imgFile, tableRectangles, 0, [], [], function (allTableOcrResults, ocrTableErrors){
                     let allResults = { formOcrResult: formOcrResult.payload, tableOcrResult: allTableOcrResults, ocrTableErrors: ocrTableErrors }
-                    results.push({ page: images[idx].page, allResults: allResults })
+                    results.push({ page: images[idx].page, allResults: allResults, templateId: images[idx].templateId })
 
                     ParserLogic.ocrImages2(images, idx + 1, pageInfos, results, callback, callbackError)
                 })
@@ -216,7 +217,7 @@ class ParserLogic
 
                 ParserLogic.ocrTable(imgFile, tableRectangles, 0, [], [], function (allTableOcrResults, ocrTableErrors){
                     let allResults = { formOcrResult: null, tableOcrResult: allTableOcrResults, ocrTableErrors: ocrTableErrors }
-                    results.push({ page: images[idx].page, allResults: allResults })
+                    results.push({ page: images[idx].page, allResults: allResults, templateId: images[idx].templateId })
 
                     ParserLogic.ocrImages2(images, idx + 1, pageInfos, results, callback, callbackError)
                 })
@@ -397,6 +398,9 @@ class ParserLogic
 
         }).catch((err)=>{
             console.log('remoteOcrAgain.err')
+            console.log(ocrurl);
+            console.log(param);
+            console.log(err);
             //console.log(err)
             if(callbackError != null)
                 callbackError(err)
