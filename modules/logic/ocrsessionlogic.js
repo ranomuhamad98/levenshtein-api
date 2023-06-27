@@ -196,20 +196,20 @@ class OcrSessionLogic extends CommonLogic {
             let tmpFiles = [];
 
 
-            console.log("ocrResults")
-            console.log(ocrResults)
+            //console.log("ocrResults")
+            //console.log(ocrResults)
 
             let allArrayResults = await OcrSessionLogic.getResultsArray(ocrResults, document);
 
-            console.log("allArrayResults")
-            console.log(allArrayResults)
+            //console.log("allArrayResults")
+            //console.log(allArrayResults)
 
             let formArrays = allArrayResults[0];
             let tableArrays = allArrayResults[1];
             let formCsv = convertArrayToCSV(formArrays, { separator: "," })
 
-            console.log("formCsv")
-            console.log(formCsv)
+            //console.log("formCsv")
+            //console.log(formCsv)
 
             //console.log("formCsv")
             //console.log(formCsv)
@@ -318,8 +318,8 @@ class OcrSessionLogic extends CommonLogic {
 
             let formResult = ocrResult.allResults.formOcrResult.positions;
 
-            console.log("formResult=======")
-            console.log(formResult)
+            //console.log("formResult=======")
+            //console.log(formResult)
             if(formResult != null && formResult.length > 0 && setHeader == false)
             {
                 setHeader = true;
@@ -351,13 +351,15 @@ class OcrSessionLogic extends CommonLogic {
         //rowForms.push(row);
 
         let rowFormHeader = this.getFormRowHeaders(ocrResults);
-        console.log("rowFormHeader")
-        console.log(rowFormHeader)
+        //console.log("rowFormHeader")
+        //console.log(rowFormHeader)
         rowForms.push(rowFormHeader);
 
         let page= 1;
         let idx = 1;
         let tableHeaderDone = false;
+        let tableHeaders = [];
+
 
         //Ocr result per page
         await Promise.all( 
@@ -388,13 +390,15 @@ class OcrSessionLogic extends CommonLogic {
                 }
 
 
-                console.log("TABLERESULT")
-                console.log(tableResult)
+                //console.log("TABLERESULT")
+                //console.log(tableResult)
 
                 if(tableResult != null && tableResult.length > 0)
                 {
                     //newTable consists all tables in one page
-                    let newTable = OcrSessionLogic.getTableArray(tableResult, page, document, !tableHeaderDone, templateTitle)
+                    let o = OcrSessionLogic.getTableArray(tableResult, ocrResult.page, document, !tableHeaderDone, templateTitle, tableHeaders)
+                    let newTable = o.tables;
+                    tableHeaders = o.headers;
                     if(tableHeaderDone == false)
                         tableHeaderDone = true;
                     tables.push(newTable)
@@ -404,10 +408,9 @@ class OcrSessionLogic extends CommonLogic {
 
                 if(formResult != null && formResult.length > 0)
                 {
-                    console.log("Here")
                     rowForm.push(templateTitle)
                     rowForm.push(document)
-                    rowForm.push(page)
+                    rowForm.push(ocrResult.page)
 
                     formResult.map((formOcr)=>{
 
@@ -416,6 +419,7 @@ class OcrSessionLogic extends CommonLogic {
                             rowForm.push(formOcr.text.trim().replace(/\n/gi, ""))
                         }
                     })
+
                     rowForms.push(rowForm)
 
                 }
@@ -426,11 +430,11 @@ class OcrSessionLogic extends CommonLogic {
             })
         );
 
-        console.log("TABLES")
-        console.log(JSON.stringify(tables))
+        //console.log("TABLES")
+        //console.log(JSON.stringify(tables))
 
-        console.log("ROWFORMS")
-        console.log(rowForms)
+        //console.log("ROWFORMS")
+        //console.log(rowForms)
         let tablesByIndexes = OcrSessionLogic.mergeTableArraysByIndex(tables)
 
         return [ rowForms, tablesByIndexes]
@@ -469,7 +473,7 @@ class OcrSessionLogic extends CommonLogic {
 
     }
 
-    static getTableArray(tableResults, page, document, idx, templateTitle)
+    static getTableArray(tableResults, page, document, idx, templateTitle, headers)
     {
         let tables = [];
         let tableIdx = 0;
@@ -478,14 +482,13 @@ class OcrSessionLogic extends CommonLogic {
             if(tableResult.result != null)
             {
                 let result = tableResult.result.positions;
-
-                let headers = result[0];
                 let newTable = [];
                 let headerRow = [];
 
                 //Set table's array's header
                 if(idx == true)
                 {
+                    headers = result[0]
                     headerRow.push("TEMPLATE")
                     headerRow.push("NAMA_FILE")
                     headers.map((header)=>{
@@ -494,6 +497,7 @@ class OcrSessionLogic extends CommonLogic {
                     headerRow.push("PAGE_NO")
                     newTable.push(headerRow)
                 }
+
 
                 //Fill table's array content
                 result.map((resultRow)=>{
@@ -507,9 +511,21 @@ class OcrSessionLogic extends CommonLogic {
                         let newRow = [];
                         newRow.push(templateTitle)
                         newRow.push(document)
-                        resultRow.map((cell)=>{
-                            newRow.push(cell.text);
+
+                        headers.map((header)=>{
+
+                            for(let idx=0; idx < resultRow.length; idx++)
+                            {
+                                let cell = resultRow[idx];
+                                if(cell.fieldname != null && cell.fieldname.toLowerCase() == header.fieldname.toLowerCase())
+                                {
+                                    newRow.push(cell.text);
+                                    break;
+                                }
+                            }
                         })
+
+
                         newRow.push(page)
                         newTable.push(newRow);
                     }
@@ -521,7 +537,7 @@ class OcrSessionLogic extends CommonLogic {
             tableIdx++;
         })
 
-        return tables;
+        return { tables: tables, headers: headers } ;
     }
 
     static checkIfRowIsEmpty(resultRow)
@@ -542,8 +558,11 @@ class OcrSessionLogic extends CommonLogic {
     {
         if(this.session.user.userRole == "SUPER_ADMIN")
             return [ {model: UsersModel, as: "user"} ];
-        else 
+        else if(this.session.user.userRole == "ADMIN")
             return [ {model: UsersModel, as: "user", where: { userRole: { [Op.notLike]: "SUPER_ADMIN" } } } ];
+        else
+            return [ {model: UsersModel, as: "user", where: { email: { [Op.iLike]: this.session.user.email } } } ];
+
     }
     
 }
