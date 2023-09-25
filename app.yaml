@@ -13,4 +13,5 @@ env_variables:
   DBENGINE: "postgresql"
   UPLOADER_API: "https://gcsfileuploader-v2-dot-levenshtein-dev.et.r.appspot.com"
   OCR_API: "http://34.101.90.205:8282"
+  LOGIN_IDLE_SECONDS: 300
 

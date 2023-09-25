@@ -11,7 +11,10 @@ class UsersModel extends Model {
             firstname: DataTypes.STRING,
             lastname: DataTypes.STRING,
             createdAt: DataTypes.DATE,
-            updatedAt: DataTypes.DATE
+            updatedAt: DataTypes.DATE,
+            isLogin: DataTypes.INTEGER,
+            lastLogin: DataTypes.DATE,
+            loginSessionID: DataTypes.STRING
         }, 
         { sequelize, modelName: 'users', tableName: 'users', force: force });
     }

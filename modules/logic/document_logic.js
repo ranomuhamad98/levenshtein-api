@@ -8,6 +8,12 @@ const UsersModel = require("../models/users_model")
 
 class DocumentLogic extends CommonLogic {
 
+    /*
+    fungsi untuk mendapatkan object document_model
+    Parameter:
+    Return:
+    - sequelize model dari object document_model
+    */
     static getModel()
     {
         const model = require("../models/document_model");

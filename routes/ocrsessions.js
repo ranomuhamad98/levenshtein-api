@@ -6,6 +6,14 @@ class OcrSessionRouter extends CrudRouter{
     static getRouter(logic)
     {
         let router = super.getRouter(logic);
+
+        /*
+        * Router untuk download hasil OCR
+        * Parameter: 
+        * - ocrsessionid, id dari sessi ocr
+        * Return:
+        * - File excel hasil ocr
+        */
         router.get("/download-ocr-result/:ocrsessionid", (req, res)=>{
             let id = req.params.ocrsessionid
             logic.downloadOcrResult(id).then((response)=>{
