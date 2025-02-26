@@ -16,12 +16,9 @@ class UsersRouter extends CrudRouter{
                 console.log(err)
                 res.send({success: false, error: err, message: err.message})
             })
-            
         });
 
-
         router.get("/should-i-logout", (req, res)=>{
-            
             //req.session.user = null;
             let email = req.query.user;
             let sessionID = req.query.sessionID;

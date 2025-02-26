@@ -16,7 +16,7 @@ class UsersModel extends Model {
             lastLogin: DataTypes.DATE,
             loginSessionID: DataTypes.STRING
         }, 
-        { sequelize, modelName: 'users', tableName: 'users', force: force });
+        { sequelize, modelName: 'users_dev', tableName: 'users', force: force });
     }
 }
 

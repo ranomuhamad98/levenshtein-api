@@ -45,7 +45,7 @@ class OcrSessionRouter extends CrudRouter{
         router.get("/hello", (req, res)=>{
             res.send({ success: true });
         })
-
+ 
         return router;
     }
 

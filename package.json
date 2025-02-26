@@ -19,7 +19,7 @@
     "cors": "^2.8.5",
     "csv-parse": "^4.16.0",
     "debug": "~2.6.9",
-    "dotenv": "^8.2.0",
+    "dotenv": "^8.6.0",
     "ejs": "^3.1.5",
     "express": "~4.16.1",
     "express-session": "^1.17.1",
@@ -39,10 +39,11 @@
     "pg": "^8.5.1",
     "pg-hstore": "^2.3.3",
     "randomstring": "^1.2.2",
+    "request": "^2.88.2",
     "request-progress": "^3.0.0",
     "sequelize": "^6.3.5",
     "sharp": "^0.28.3",
-    "sqlite3": "^5.0.0",
+    "sqlite3": "^5.1.6",
     "tesseract.js": "^2.1.5",
     "zip-lib": "^0.7.2"
   }
